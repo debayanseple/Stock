@@ -135,6 +135,34 @@ function ProductsPage() {
     : "";
   const telHref = currentSupplier?.phone ? `tel:${currentSupplier.phone.replace(/\s+/g, "")}` : "";
 
+  const logSupplierMessage = useMutation({
+    mutationFn: async (channel: "email" | "call") => {
+      if (!supplierMsgProduct) throw new Error("No product selected");
+      const recipient = channel === "email" ? currentSupplier?.email ?? null : currentSupplier?.phone ?? null;
+      const { error } = await supabase.from("supplier_messages").insert({
+        product_id: supplierMsgProduct.id,
+        supplier_id: currentSupplier?.id ?? null,
+        channel,
+        recipient,
+        subject: channel === "email" ? supplierMsgSubject : null,
+        body: channel === "email" ? supplierMsgBody : null,
+        quantity_at_send: supplierMsgProduct.quantity,
+        threshold_at_send: supplierMsgProduct.reorder_threshold,
+      });
+      if (error) throw error;
+      return channel;
+    },
+    onSuccess: (channel) => {
+      qc.invalidateQueries({ queryKey: ["supplier_messages"] });
+      const href = channel === "email" ? mailtoHref : telHref;
+      if (href) window.location.href = href;
+      toast.success(channel === "email" ? "Email opened & logged" : "Call opened & logged");
+      setConfirmChannel(null);
+      setSupplierMsgOpen(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const validateForm = (f: Form): FieldErrors => {
     const e: FieldErrors = {};
     if (!f.name.trim()) e.name = "Name is required";
