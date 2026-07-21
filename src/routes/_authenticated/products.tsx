@@ -485,8 +485,8 @@ function ProductsPage() {
 
       {/* Mobile transaction FAB */}
       <div className="fixed bottom-4 right-4 z-50 sm:hidden">
-        <Button onClick={() => setGlobalTxnOpen(true)} className="shadow-lg rounded-full h-14 px-4 gap-2">
-          <ArrowLeftRight className="h-5 w-5" /> Transaction
+        <Button onClick={() => setQuickTxnOpen(true)} className="shadow-lg rounded-full h-14 px-4 gap-2">
+          <ArrowLeftRight className="h-5 w-5" /> Quick transaction
         </Button>
       </div>
 
