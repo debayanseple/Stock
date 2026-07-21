@@ -7,7 +7,7 @@ import { Package, DollarSign, AlertTriangle } from "lucide-react";
 import type { Category, Product, Transaction } from "@/lib/inventory-types";
 import { stockStatus } from "@/lib/inventory-types";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend, PieChart, Pie, Cell } from "recharts";
-import { format } from "date-fns";
+import { format, startOfQuarter, endOfQuarter, subQuarters, startOfYear, endOfYear, subYears, differenceInCalendarDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMemo, useState } from "react";
 
@@ -16,12 +16,44 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
 
-type Range = "7" | "30" | "90";
+type Range = "7" | "30" | "this_quarter" | "last_quarter" | "last_year";
+
+const RANGE_LABELS: Record<Range, string> = {
+  "7": "Last 7 days",
+  "30": "Last 30 days",
+  this_quarter: "This quarter",
+  last_quarter: "Last quarter",
+  last_year: "Last year",
+};
+
+function resolveRange(range: Range): { since: Date; until: Date; days: number; label: string } {
+  const now = new Date();
+  let since: Date;
+  let until: Date = now;
+  if (range === "7" || range === "30") {
+    const n = Number(range);
+    since = new Date(now.getTime() - n * 86400_000);
+  } else if (range === "this_quarter") {
+    since = startOfQuarter(now);
+    until = endOfQuarter(now);
+  } else if (range === "last_quarter") {
+    const lq = subQuarters(now, 1);
+    since = startOfQuarter(lq);
+    until = endOfQuarter(lq);
+  } else {
+    const ly = subYears(now, 1);
+    since = startOfYear(ly);
+    until = endOfYear(ly);
+  }
+  const days = Math.max(1, differenceInCalendarDays(until > now ? now : until, since) + 1);
+  return { since, until, days, label: RANGE_LABELS[range] };
+}
 
 function Dashboard() {
   const [range, setRange] = useState<Range>("30");
-  const days = Number(range);
-  const sinceIso = useMemo(() => new Date(Date.now() - days * 86400_000).toISOString(), [days]);
+  const { since, until, days, label: rangeLabel } = useMemo(() => resolveRange(range), [range]);
+  const sinceIso = since.toISOString();
+  const untilIso = until.toISOString();
 
   const products = useQuery({
     queryKey: ["products"],
@@ -55,12 +87,13 @@ function Dashboard() {
   });
 
   const window = useQuery({
-    queryKey: ["transactions", "window", days],
+    queryKey: ["transactions", "window", sinceIso, untilIso],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("transactions")
         .select("id, type, quantity, created_at, product_id, products(name, sku, unit_price, category_id)")
         .gte("created_at", sinceIso)
+        .lte("created_at", untilIso)
         .order("created_at", { ascending: true });
       if (error) throw error;
       return data as Array<Transaction & { products: { name: string; sku: string; unit_price: number; category_id: string | null } | null }>;
@@ -105,7 +138,7 @@ function Dashboard() {
   // Daily trend
   const dayMap = new Map<string, { day: string; In: number; Out: number }>();
   for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(Date.now() - i * 86400_000);
+    const d = new Date(until.getTime() - i * 86400_000);
     const key = format(d, "yyyy-MM-dd");
     dayMap.set(key, { day: format(d, days > 30 ? "MMM d" : "MMM d"), In: 0, Out: 0 });
   }
@@ -146,7 +179,9 @@ function Dashboard() {
           <SelectContent>
             <SelectItem value="7">Last 7 days</SelectItem>
             <SelectItem value="30">Last 30 days</SelectItem>
-            <SelectItem value="90">Last 90 days</SelectItem>
+            <SelectItem value="this_quarter">This quarter</SelectItem>
+            <SelectItem value="last_quarter">Last quarter</SelectItem>
+            <SelectItem value="last_year">Last year</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -163,7 +198,7 @@ function Dashboard() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle>Top movers · {days}d</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Top movers · {rangeLabel}</CardTitle></CardHeader>
           <CardContent className="h-64">
             {topMovers.length ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -184,7 +219,7 @@ function Dashboard() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Daily stock flow · {days}d</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Daily stock flow · {rangeLabel}</CardTitle></CardHeader>
           <CardContent className="h-64">
             {rows.length ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -205,7 +240,7 @@ function Dashboard() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Top sellers · {days}d</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Top sellers · {rangeLabel}</CardTitle></CardHeader>
           <CardContent>
             {topSellers.length ? (
               <ul className="space-y-2">
