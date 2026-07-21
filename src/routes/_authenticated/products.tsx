@@ -19,9 +19,9 @@ import { stockStatus, downloadCSV, formatINR } from "@/lib/inventory-types";
 export const Route = createFileRoute("/_authenticated/products")({
   head: () => ({
     meta: [
-      { title: "Products — StockSathi" },
+      { title: "Products — StockLine" },
       { name: "description", content: "Browse, search, and manage your product inventory with SKUs, prices, and stock levels." },
-      { property: "og:title", content: "Products — StockSathi" },
+      { property: "og:title", content: "Products — StockLine" },
       { property: "og:description", content: "Browse, search, and manage your product inventory with SKUs, prices, and stock levels." },
       { property: "og:url", content: "/products" },
     ],

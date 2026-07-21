@@ -16,9 +16,9 @@ import type { Supplier } from "@/lib/inventory-types";
 export const Route = createFileRoute("/_authenticated/suppliers")({
   head: () => ({
     meta: [
-      { title: "Suppliers — StockSathi" },
+      { title: "Suppliers — StockLine" },
       { name: "description", content: "Manage suppliers, contact details, and reorder outreach for your inventory." },
-      { property: "og:title", content: "Suppliers — StockSathi" },
+      { property: "og:title", content: "Suppliers — StockLine" },
       { property: "og:description", content: "Manage suppliers, contact details, and reorder outreach for your inventory." },
       { property: "og:url", content: "/suppliers" },
     ],

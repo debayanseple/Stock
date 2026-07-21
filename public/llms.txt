@@ -1,4 +1,4 @@
-# StockSathi
+# StockLine
 
 > Inventory and stock management portal for small businesses — track products, suppliers, and stock movements.
 

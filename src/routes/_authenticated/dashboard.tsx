@@ -18,9 +18,9 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — StockSathi" },
+      { title: "Dashboard — StockLine" },
       { name: "description", content: "See total products, stock value, low-stock alerts, and recent movement trends at a glance." },
-      { property: "og:title", content: "Dashboard — StockSathi" },
+      { property: "og:title", content: "Dashboard — StockLine" },
       { property: "og:description", content: "See total products, stock value, low-stock alerts, and recent movement trends at a glance." },
       { property: "og:url", content: "/dashboard" },
     ],
