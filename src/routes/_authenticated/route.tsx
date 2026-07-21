@@ -101,7 +101,15 @@ function LayoutShell() {
               <span className="group-data-[collapsible=icon]:hidden">Sign out</span>
             </Button>
             <div className="px-2 py-1 text-[10px] text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden">
-              Powered by © ZeroTheorys
+              Powered by ©{" "}
+              <a
+                href="https://zerotheorys.lovable.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-sidebar-foreground"
+              >
+                ZeroTheorys
+              </a>
             </div>
           </SidebarFooter>
         </Sidebar>
