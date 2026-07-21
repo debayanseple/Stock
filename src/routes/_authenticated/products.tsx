@@ -315,8 +315,9 @@ function ProductsPage() {
           </Select>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:flex">
-          <Button variant="outline" onClick={exportCSV} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> CSV</Button>
+        <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
+          <Button variant="outline" size="sm" onClick={exportCSV} className="ml-auto sm:ml-0"><Download className="h-4 w-4 mr-1" /> CSV</Button>
+          <Button variant="outline" size="sm" onClick={() => setGlobalTxnOpen(true)} className="hidden sm:inline-flex"><ArrowLeftRight className="h-4 w-4 mr-1" /> Transaction</Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button onClick={openNew} className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-1" /> New product</Button></DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
