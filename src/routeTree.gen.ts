@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedCategoriesRouteImport } from './routes/_authenticated/categories'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -33,15 +34,22 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCategoriesRoute = AuthenticatedCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/categories': typeof AuthenticatedCategoriesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/categories': typeof AuthenticatedCategoriesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
 }
 export interface FileRoutesById {
@@ -49,18 +57,20 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/categories': typeof AuthenticatedCategoriesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard'
+  fullPaths: '/' | '/auth' | '/categories' | '/dashboard'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard'
+  to: '/' | '/auth' | '/categories' | '/dashboard'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/categories'
     | '/_authenticated/dashboard'
   fileRoutesById: FileRoutesById
 }
@@ -100,14 +110,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/categories': {
+      id: '/_authenticated/categories'
+      path: '/categories'
+      fullPath: '/categories'
+      preLoaderRoute: typeof AuthenticatedCategoriesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCategoriesRoute: typeof AuthenticatedCategoriesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCategoriesRoute: AuthenticatedCategoriesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
 }
 
