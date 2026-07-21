@@ -318,7 +318,6 @@ function ProductsPage() {
         <div className="flex flex-col sm:flex-row items-end justify-end gap-2 w-full sm:w-auto">
           <div className="flex items-center justify-end gap-2">
             <Button variant="outline" size="sm" onClick={() => setGlobalTxnOpen(true)} className="hidden sm:inline-flex"><ArrowLeftRight className="h-4 w-4 mr-1" /> Transaction</Button>
-            <Button variant="outline" size="sm" onClick={exportCSV}><Download className="h-4 w-4 mr-1" /> CSV</Button>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button onClick={openNew} className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-1" /> New product</Button></DialogTrigger>
@@ -482,6 +481,10 @@ function ProductsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <div className="flex justify-end">
+        <Button variant="outline" size="sm" onClick={exportCSV}><Download className="h-4 w-4 mr-1" /> CSV</Button>
+      </div>
 
       {/* Mobile transaction FAB */}
       <div className="fixed bottom-4 right-4 z-50 sm:hidden">
