@@ -362,8 +362,8 @@ function ProductsPage() {
                     <div className="font-mono text-xs text-muted-foreground truncate">{p.sku}</div>
                   </div>
                   {s === "out" ? <Badge variant="destructive" className="shrink-0">Out</Badge>
-                    : s === "low" ? <Badge className="bg-orange-500 hover:bg-orange-500 text-white shrink-0">Low · {p.quantity}</Badge>
-                    : <Badge variant="secondary" className="shrink-0">{p.quantity}</Badge>}
+                    : s === "low" ? <Badge className="bg-warning text-warning-foreground hover:bg-warning/90 shrink-0">Low · {p.quantity}</Badge>
+                    : <Badge className="bg-success text-success-foreground hover:bg-success/90 shrink-0">{p.quantity}</Badge>}
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                   <div><span className="block uppercase tracking-wide text-[10px]">Category</span><span className="text-foreground">{catMap.get(p.category_id ?? "") ?? "—"}</span></div>
@@ -413,8 +413,8 @@ function ProductsPage() {
                     <TableCell className="text-right">${Number(p.unit_price).toFixed(2)}</TableCell>
                     <TableCell className="text-right">
                       {s === "out" ? <Badge variant="destructive">Out</Badge>
-                        : s === "low" ? <Badge className="bg-orange-500 hover:bg-orange-500 text-white">Low · {p.quantity}</Badge>
-                        : <span>{p.quantity}</span>}
+                        : s === "low" ? <Badge className="bg-warning text-warning-foreground hover:bg-warning/90">Low · {p.quantity}</Badge>
+                        : <Badge className="bg-success text-success-foreground hover:bg-success/90">{p.quantity}</Badge>}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" title="Stock in" onClick={() => setTxnOpen({ product: p, type: "in" })}><ArrowDownToLine className="h-4 w-4" /></Button>
