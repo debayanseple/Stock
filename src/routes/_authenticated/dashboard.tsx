@@ -1,15 +1,17 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, IndianRupee, AlertTriangle } from "lucide-react";
+import { Package, IndianRupee, AlertTriangle, ChevronRight } from "lucide-react";
 import type { Category, Product, Transaction } from "@/lib/inventory-types";
 import { stockStatus, formatINR } from "@/lib/inventory-types";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend, PieChart, Pie, Cell } from "recharts";
 import { format, startOfQuarter, endOfQuarter, subQuarters, startOfYear, endOfYear, subYears, differenceInCalendarDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMemo, useState } from "react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — StockSathi" }] }),
@@ -51,6 +53,8 @@ function resolveRange(range: Range): { since: Date; until: Date; days: number; l
 
 function Dashboard() {
   const [range, setRange] = useState<Range>("30");
+  const [lowOpen, setLowOpen] = useState(false);
+  const navigate = useNavigate();
   const { since, until, days, label: rangeLabel } = useMemo(() => resolveRange(range), [range]);
   const sinceIso = since.toISOString();
   const untilIso = until.toISOString();
@@ -187,13 +191,9 @@ function Dashboard() {
       </div>
 
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total products" value={totalProducts} icon={Package} />
-        <StatCard
-          label="Total stock value"
-          value={formatINR(totalValue)}
-          icon={IndianRupee}
-        />
-        <StatCard label="Low / out of stock" value={lowStock.length} icon={AlertTriangle} tone="warn" />
+        <StatCard label="Total products" value={totalProducts} icon={Package} onClick={() => navigate({ to: "/products" })} />
+        <StatCard label="Total stock value" value={formatINR(totalValue)} icon={IndianRupee} onClick={() => navigate({ to: "/products" })} />
+        <StatCard label="Low / out of stock" value={lowStock.length} icon={AlertTriangle} tone="warn" onClick={() => setLowOpen(true)} badge={lowStock.length > 0 ? "View" : undefined} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -283,7 +283,12 @@ function Dashboard() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Low-stock alerts</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Low-stock alerts</CardTitle>
+            {lowStock.length > 0 && (
+              <button onClick={() => setLowOpen(true)} className="text-xs text-primary hover:underline">See all ({lowStock.length})</button>
+            )}
+          </CardHeader>
           <CardContent>
             {lowStock.length === 0 ? (
               <p className="text-sm text-muted-foreground">All items are above their reorder threshold.</p>
@@ -329,31 +334,88 @@ function Dashboard() {
           )}
         </CardContent>
       </Card>
+
+      <Sheet open={lowOpen} onOpenChange={setLowOpen}>
+        <SheetContent side="bottom" className="max-h-[85vh] flex flex-col sm:max-w-lg sm:mx-auto sm:rounded-t-xl">
+          <SheetHeader className="text-left">
+            <SheetTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-warning" /> Low-stock items</SheetTitle>
+            <SheetDescription>
+              {lowStock.length === 0 ? "Nothing to reorder — everything is above threshold." : `${lowStock.length} item${lowStock.length === 1 ? "" : "s"} at or below reorder threshold.`}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto -mx-6 px-6 py-2">
+            {lowStock.length === 0 ? null : (
+              <ul className="divide-y">
+                {lowStock
+                  .slice()
+                  .sort((a, b) => a.quantity - b.quantity)
+                  .map((p) => (
+                    <li key={p.id}>
+                      <SheetClose asChild>
+                        <Link
+                          to="/products"
+                          className="flex items-center justify-between gap-3 py-3 -mx-2 px-2 rounded-md active:bg-muted"
+                        >
+                          <div className="min-w-0">
+                            <div className="font-medium truncate">{p.name}</div>
+                            <div className="text-xs text-muted-foreground font-mono truncate">{p.sku}</div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <StockBadge product={p} />
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        </Link>
+                      </SheetClose>
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </div>
+          <SheetFooter className="pt-2">
+            <SheetClose asChild>
+              <Button asChild className="w-full"><Link to="/products">Open products</Link></Button>
+            </SheetClose>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
 
-function StatCard({ label, value, icon: Icon, tone }: { label: string; value: React.ReactNode; icon: React.ElementType; tone?: "warn" | "ok" }) {
+function StatCard({ label, value, icon: Icon, tone, onClick, badge }: { label: string; value: React.ReactNode; icon: React.ElementType; tone?: "warn" | "ok"; onClick?: () => void; badge?: string }) {
   const toneCls = tone === "warn"
     ? "bg-destructive/10 text-destructive"
     : tone === "ok"
     ? "bg-success/10 text-success"
     : "bg-primary/10 text-primary";
-  return (
-    <Card>
-      <CardContent className="pt-4 sm:pt-6">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <div className="text-[10px] sm:text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-            <div className="text-lg sm:text-2xl font-semibold mt-1 break-words">{value}</div>
-          </div>
-          <div className={`h-8 w-8 sm:h-9 sm:w-9 shrink-0 rounded-md flex items-center justify-center ${toneCls}`}>
-            <Icon className="h-4 w-4" />
-          </div>
+  const inner = (
+    <CardContent className="p-4 sm:p-5">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-[10px] sm:text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+          <div className="text-xl sm:text-2xl font-semibold mt-1 break-words leading-tight">{value}</div>
+          {badge && <div className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-primary">{badge} <ChevronRight className="h-3 w-3" /></div>}
         </div>
-      </CardContent>
-    </Card>
+        <div className={`h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-lg flex items-center justify-center ${toneCls}`}>
+          <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+        </div>
+      </div>
+    </CardContent>
   );
+  if (onClick) {
+    return (
+      <Card
+        role="button"
+        tabIndex={0}
+        onClick={onClick}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
+        className="cursor-pointer select-none min-h-[92px] transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        {inner}
+      </Card>
+    );
+  }
+  return <Card className="min-h-[92px]">{inner}</Card>;
 }
 
 function StockBadge({ product }: { product: Product }) {
