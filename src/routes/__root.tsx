@@ -78,9 +78,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "StockHub — Inventory & Stock Management" },
+      { title: "StockSathi — Inventory & Stock Management" },
       { name: "description", content: "Manage products, categories, suppliers, and stock movements with a clean inventory portal." },
-      { property: "og:title", content: "StockHub — Inventory & Stock Management" },
+      { property: "og:title", content: "StockSathi — Inventory & Stock Management" },
       { property: "og:description", content: "Manage products, categories, suppliers, and stock movements with a clean inventory portal." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

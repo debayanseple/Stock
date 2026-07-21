@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Package } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Sign in — StockHub" }] }),
+  head: () => ({ meta: [{ title: "Sign in — StockSathi" }] }),
   component: AuthPage,
 });
 
@@ -56,7 +56,7 @@ function AuthPage() {
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Package className="h-6 w-6" />
           </div>
-          <CardTitle className="text-2xl">StockHub</CardTitle>
+          <CardTitle className="text-2xl">StockSathi</CardTitle>
           <CardDescription>Inventory & stock management portal</CardDescription>
         </CardHeader>
         <CardContent>
