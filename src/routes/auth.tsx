@@ -78,89 +78,93 @@ function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-      <div className="w-full max-w-md flex flex-col items-center">
-        <Card className="w-full">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Package className="h-6 w-6" />
+    <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4 sm:p-6">
+      <div className="w-full max-w-[420px] flex flex-col items-center gap-6">
+        <Card className="w-full shadow-lg border-border/60">
+          <CardHeader className="text-center space-y-5 pt-8 pb-6 px-6 sm:px-8">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md">
+              <Package className="h-7 w-7" />
             </div>
-            <h1 className="text-2xl font-semibold leading-none tracking-tight">
-              {showForgot ? "Reset your password" : "Sign in to StockLine"}
-            </h1>
-            <CardDescription>
-              {showForgot ? "We'll email you a reset link" : "Inventory & stock management portal"}
-            </CardDescription>
+            <div className="space-y-2">
+              <h1 className="text-[1.75rem] font-semibold leading-tight tracking-tight text-foreground">
+                {showForgot ? "Reset your password" : "Sign in to StockLine"}
+              </h1>
+              <CardDescription className="text-sm leading-relaxed text-muted-foreground">
+                {showForgot ? "We'll email you a reset link" : "Inventory & stock management portal"}
+              </CardDescription>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-6 pb-8 sm:px-8">
             {showForgot ? (
-              <form onSubmit={handleForgot} className="space-y-4 mt-2">
-                <div className="space-y-2">
-                  <Label htmlFor="fp-email">Email</Label>
-                  <Input id="fp-email" type="email" required value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
+              <form onSubmit={handleForgot} className="space-y-5">
+                <div className="space-y-1.5">
+                  <Label htmlFor="fp-email" className="text-sm font-medium">Email</Label>
+                  <Input id="fp-email" type="email" required value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} className="h-11" />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>{loading ? "Sending…" : "Send reset link"}</Button>
-                <Button type="button" variant="ghost" className="w-full" onClick={() => setShowForgot(false)}>
-                  Back to sign in
-                </Button>
+                <div className="space-y-3 pt-1">
+                  <Button type="submit" className="w-full h-11 text-sm font-medium" disabled={loading}>{loading ? "Sending…" : "Send reset link"}</Button>
+                  <Button type="button" variant="ghost" className="w-full h-11 text-sm font-medium" onClick={() => setShowForgot(false)}>
+                    Back to sign in
+                  </Button>
+                </div>
               </form>
             ) : (
-            <Tabs defaultValue="signin">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign in</TabsTrigger>
-                <TabsTrigger value="signup">Sign up</TabsTrigger>
+            <Tabs defaultValue="signin" className="space-y-5">
+              <TabsList className="grid w-full grid-cols-2 h-11 p-1 bg-muted/60">
+                <TabsTrigger value="signin" className="text-sm font-medium">Sign in</TabsTrigger>
+                <TabsTrigger value="signup" className="text-sm font-medium">Sign up</TabsTrigger>
               </TabsList>
-              <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="si-email">Email</Label>
-                    <Input id="si-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              <TabsContent value="signin" className="mt-0">
+                <form onSubmit={handleSignIn} className="space-y-5">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="si-email" className="text-sm font-medium">Email</Label>
+                    <Input id="si-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-11" />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="si-pw">Password</Label>
+                      <Label htmlFor="si-pw" className="text-sm font-medium">Password</Label>
                       <button
                         type="button"
                         onClick={() => { setResetEmail(email); setShowForgot(true); }}
-                        className="text-xs text-primary hover:underline"
+                        className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
                       >
                         Forgot password?
                       </button>
                     </div>
-                    <Input id="si-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <Input id="si-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-11" />
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>{loading ? "Signing in…" : "Sign in"}</Button>
+                  <Button type="submit" className="w-full h-11 text-sm font-medium" disabled={loading}>{loading ? "Signing in…" : "Sign in"}</Button>
                 </form>
               </TabsContent>
-              <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="su-name">Name</Label>
-                    <Input id="su-name" type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" />
+              <TabsContent value="signup" className="mt-0">
+                <form onSubmit={handleSignUp} className="space-y-5">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="su-name" className="text-sm font-medium">Name</Label>
+                    <Input id="su-name" type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" className="h-11" />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="su-email">Email</Label>
-                    <Input id="su-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="su-email" className="text-sm font-medium">Email</Label>
+                    <Input id="su-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-11" />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="su-pw">Password</Label>
-                    <Input id="su-pw" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="su-pw" className="text-sm font-medium">Password</Label>
+                    <Input id="su-pw" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} className="h-11" />
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>{loading ? "Creating…" : "Create account"}</Button>
+                  <Button type="submit" className="w-full h-11 text-sm font-medium" disabled={loading}>{loading ? "Creating…" : "Create account"}</Button>
                 </form>
               </TabsContent>
             </Tabs>
             )}
           </CardContent>
         </Card>
-        <div className="mt-5 px-4 py-2 rounded-full bg-background/80 border border-border shadow-sm text-xs text-muted-foreground flex items-center gap-1.5">
+        <div className="px-4 py-2.5 rounded-full bg-background/80 border border-border shadow-sm text-xs text-muted-foreground flex items-center gap-1.5">
           <span>Powered by</span>
           <span className="font-medium text-foreground">©</span>
           <a
             href="https://zerotheorys.lovable.app/"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-primary hover:underline"
+            className="font-medium text-primary hover:text-primary/80 transition-colors"
           >
             ZeroTheorys
           </a>
