@@ -135,7 +135,7 @@ function Dashboard() {
     .map(([name, value]) => ({ name, value: Number(value.toFixed(2)) }))
     .filter((c) => c.value > 0)
     .sort((a, b) => b.value - a.value);
-  const pieColors = ["hsl(var(--primary))", "#f97316", "#10b981", "#8b5cf6", "#eab308", "#06b6d4", "#ec4899", "#64748b"];
+  const pieColors = ["var(--primary)", "var(--accent-brand)", "var(--success)", "var(--warning)", "var(--primary-glow)", "var(--destructive)", "var(--muted-foreground)"];
 
   return (
     <div className="space-y-6">
@@ -184,8 +184,8 @@ function Dashboard() {
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Bar dataKey="In" stackId="a" fill="hsl(var(--primary))" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="Out" stackId="a" fill="#f97316" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="In" stackId="a" fill="var(--primary)" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="Out" stackId="a" fill="var(--warning)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -205,8 +205,8 @@ function Dashboard() {
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Line type="monotone" dataKey="In" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="Out" stroke="#f97316" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="In" stroke="var(--primary)" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="Out" stroke="var(--warning)" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
@@ -313,7 +313,7 @@ function StatCard({ label, value, icon: Icon, tone }: { label: string; value: Re
   const toneCls = tone === "warn"
     ? "bg-destructive/10 text-destructive"
     : tone === "ok"
-    ? "bg-emerald-500/10 text-emerald-600"
+    ? "bg-success/10 text-success"
     : "bg-primary/10 text-primary";
   return (
     <Card>
@@ -335,6 +335,6 @@ function StatCard({ label, value, icon: Icon, tone }: { label: string; value: Re
 function StockBadge({ product }: { product: Product }) {
   const s = stockStatus(product);
   if (s === "out") return <Badge variant="destructive">Out of stock</Badge>;
-  if (s === "low") return <Badge className="bg-orange-500 hover:bg-orange-500 text-white">Low · {product.quantity}</Badge>;
-  return <Badge variant="secondary">{product.quantity}</Badge>;
+  if (s === "low") return <Badge className="bg-warning text-warning-foreground hover:bg-warning/90">Low · {product.quantity}</Badge>;
+  return <Badge className="bg-success text-success-foreground hover:bg-success/90">{product.quantity}</Badge>;
 }
