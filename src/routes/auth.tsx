@@ -79,10 +79,26 @@ function AuthPage() {
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Package className="h-6 w-6" />
           </div>
-          <h1 className="text-2xl font-semibold leading-none tracking-tight">Sign in to StockSathi</h1>
-          <CardDescription>Inventory & stock management portal</CardDescription>
+          <h1 className="text-2xl font-semibold leading-none tracking-tight">
+            {showForgot ? "Reset your password" : "Sign in to StockSathi"}
+          </h1>
+          <CardDescription>
+            {showForgot ? "We'll email you a reset link" : "Inventory & stock management portal"}
+          </CardDescription>
         </CardHeader>
         <CardContent>
+          {showForgot ? (
+            <form onSubmit={handleForgot} className="space-y-4 mt-2">
+              <div className="space-y-2">
+                <Label htmlFor="fp-email">Email</Label>
+                <Input id="fp-email" type="email" required value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>{loading ? "Sending…" : "Send reset link"}</Button>
+              <Button type="button" variant="ghost" className="w-full" onClick={() => setShowForgot(false)}>
+                Back to sign in
+              </Button>
+            </form>
+          ) : (
           <Tabs defaultValue="signin">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign in</TabsTrigger>
@@ -95,7 +111,16 @@ function AuthPage() {
                   <Input id="si-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="si-pw">Password</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="si-pw">Password</Label>
+                    <button
+                      type="button"
+                      onClick={() => { setResetEmail(email); setShowForgot(true); }}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
                   <Input id="si-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>{loading ? "Signing in…" : "Sign in"}</Button>
@@ -115,6 +140,7 @@ function AuthPage() {
               </form>
             </TabsContent>
           </Tabs>
+          )}
         </CardContent>
       </Card>
     </div>
