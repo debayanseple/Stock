@@ -167,21 +167,22 @@ function ProductsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-3 items-end justify-between">
-        <div className="flex flex-wrap gap-2 items-center">
-          <div className="relative">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
             <Search className="h-4 w-4 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Search name or SKU" className="pl-8 w-64" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input placeholder="Search name or SKU" className="pl-8 w-full" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:w-auto">
           <Select value={catFilter} onValueChange={setCatFilter}>
-            <SelectTrigger className="w-44"><SelectValue placeholder="Category" /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-44"><SelectValue placeholder="Category" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All categories</SelectItem>
               {(categories.data ?? []).map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All stock</SelectItem>
               <SelectItem value="ok">In stock</SelectItem>
@@ -189,14 +190,15 @@ function ProductsPage() {
               <SelectItem value="out">Out of stock</SelectItem>
             </SelectContent>
           </Select>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={exportCSV}><Download className="h-4 w-4 mr-1" /> CSV</Button>
+        <div className="grid grid-cols-2 gap-2 sm:flex">
+          <Button variant="outline" onClick={exportCSV} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> CSV</Button>
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button onClick={openNew}><Plus className="h-4 w-4 mr-1" /> New product</Button></DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogTrigger asChild><Button onClick={openNew} className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-1" /> New product</Button></DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>{editing ? "Edit product" : "New product"}</DialogTitle></DialogHeader>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1 col-span-2"><Label>Name *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
                 <div className="space-y-1"><Label>SKU *</Label><Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} /></div>
                 <div className="space-y-1">
@@ -224,7 +226,7 @@ function ProductsPage() {
                 <div className="space-y-1"><Label>Reorder threshold</Label><Input type="number" min="0" step="1" value={form.reorder_threshold} onChange={(e) => setForm({ ...form, reorder_threshold: e.target.value })} /></div>
                 <div className="space-y-1 col-span-2"><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
               </div>
-              <DialogFooter>
+              <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
                 <Button onClick={() => save.mutate()} disabled={save.isPending}>Save</Button>
               </DialogFooter>
@@ -233,8 +235,46 @@ function ProductsPage() {
         </div>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
+      {/* Mobile card list */}
+      <div className="grid gap-3 sm:hidden">
+        {products.isLoading ? (
+          <p className="text-center text-sm text-muted-foreground py-6">Loading…</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground py-6">No products match your filters.</p>
+        ) : filtered.map((p) => {
+          const s = stockStatus(p);
+          return (
+            <Card key={p.id}>
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{p.name}</div>
+                    <div className="font-mono text-xs text-muted-foreground truncate">{p.sku}</div>
+                  </div>
+                  {s === "out" ? <Badge variant="destructive" className="shrink-0">Out</Badge>
+                    : s === "low" ? <Badge className="bg-orange-500 hover:bg-orange-500 text-white shrink-0">Low · {p.quantity}</Badge>
+                    : <Badge variant="secondary" className="shrink-0">{p.quantity}</Badge>}
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                  <div><span className="block uppercase tracking-wide text-[10px]">Category</span><span className="text-foreground">{catMap.get(p.category_id ?? "") ?? "—"}</span></div>
+                  <div><span className="block uppercase tracking-wide text-[10px]">Supplier</span><span className="text-foreground">{supMap.get(p.supplier_id ?? "") ?? "—"}</span></div>
+                  <div><span className="block uppercase tracking-wide text-[10px]">Price</span><span className="text-foreground">${Number(p.unit_price).toFixed(2)}</span></div>
+                  <div><span className="block uppercase tracking-wide text-[10px]">Stock</span><span className="text-foreground">{p.quantity}</span></div>
+                </div>
+                <div className="flex gap-1 justify-end border-t pt-2 -mx-1">
+                  <Button variant="ghost" size="icon" title="Stock in" onClick={() => setTxnOpen({ product: p, type: "in" })}><ArrowDownToLine className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" title="Stock out" onClick={() => setTxnOpen({ product: p, type: "out" })}><ArrowUpFromLine className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete "${p.name}"?`)) del.mutate(p.id); }}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      <Card className="hidden sm:block">
+        <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
