@@ -230,6 +230,41 @@ function ProductsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const recordGlobalTxn = useMutation({
+    mutationFn: async () => {
+      const product = products.data?.find((p) => p.id === globalTxnProductId);
+      if (!product) {
+        setGlobalTxnError("Select a product");
+        throw new Error("Select a product");
+      }
+      const qty = Number(globalTxnQty);
+      if (globalTxnQty === "" || !Number.isInteger(qty) || qty <= 0) {
+        setGlobalTxnError("Enter a whole number greater than 0");
+        globalTxnQtyRef.current?.focus();
+        throw new Error("Enter a whole number greater than 0");
+      }
+      if (globalTxnType === "out" && qty > product.quantity) {
+        setGlobalTxnError(`Only ${product.quantity} in stock — cannot remove more`);
+        globalTxnQtyRef.current?.focus();
+        throw new Error("Insufficient stock");
+      }
+      const { error } = await supabase.from("transactions").insert({
+        product_id: product.id,
+        type: globalTxnType,
+        quantity: qty,
+        notes: globalTxnNotes || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Transaction recorded");
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["transactions"] });
+      setGlobalTxnOpen(false); setGlobalTxnProductId(""); setGlobalTxnType("in"); setGlobalTxnQty("1"); setGlobalTxnNotes(""); setGlobalTxnError(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const openNew = () => { setEditing(null); setForm(emptyForm); setOpen(true); };
   const openEdit = (p: Product) => {
     setEditing(p);
