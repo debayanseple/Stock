@@ -64,12 +64,14 @@ function LayoutShell() {
       <div className="min-h-screen flex w-full bg-muted/20">
         <Sidebar collapsible="icon">
           <SidebarHeader className="border-b">
-            <div className="flex items-center gap-2 px-2 py-2">
-              <div className="h-8 w-8 rounded-md bg-primary text-primary-foreground flex items-center justify-center">
-                <Package className="h-4 w-4" />
-              </div>
+            <Link to="/dashboard" className="flex items-center gap-2 px-2 py-2">
+              <img
+                src="/logo.png"
+                alt="StockSathi"
+                className="h-8 w-8 rounded-md object-contain bg-background"
+              />
               <div className="font-semibold group-data-[collapsible=icon]:hidden">StockSathi</div>
-            </div>
+            </Link>
           </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>
