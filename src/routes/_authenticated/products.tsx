@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Download, Search, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight } from "lucide-react";
+import { Plus, Pencil, Trash2, Download, Search, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight, Mail, Phone } from "lucide-react";
 import type { Category, Product, Supplier } from "@/lib/inventory-types";
 import { stockStatus, downloadCSV, formatINR } from "@/lib/inventory-types";
 
@@ -52,6 +52,11 @@ function ProductsPage() {
   const globalTxnQtyRef = useRef<HTMLInputElement>(null);
   const [quickTxnOpen, setQuickTxnOpen] = useState(false);
 
+  const [supplierMsgOpen, setSupplierMsgOpen] = useState(false);
+  const [supplierMsgProduct, setSupplierMsgProduct] = useState<Product | null>(null);
+  const [supplierMsgSubject, setSupplierMsgSubject] = useState("");
+  const [supplierMsgBody, setSupplierMsgBody] = useState("");
+
   const products = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
@@ -79,6 +84,28 @@ function ProductsPage() {
 
   const catMap = useMemo(() => new Map((categories.data ?? []).map((c) => [c.id, c.name])), [categories.data]);
   const supMap = useMemo(() => new Map((suppliers.data ?? []).map((s) => [s.id, s.name])), [suppliers.data]);
+  const supRecMap = useMemo(() => new Map((suppliers.data ?? []).map((s) => [s.id, s])), [suppliers.data]);
+
+  const openSupplierMsg = (p: Product) => {
+    const sup = p.supplier_id ? supRecMap.get(p.supplier_id) ?? null : null;
+    const suggestedQty = Math.max((p.reorder_threshold || 0) * 2 - p.quantity, 10);
+    setSupplierMsgProduct(p);
+    setSupplierMsgSubject(`Reorder request: ${p.name} (SKU ${p.sku})`);
+    setSupplierMsgBody(
+      `Hi${sup?.contact_name ? ` ${sup.contact_name}` : sup?.name ? ` ${sup.name}` : ""},\n\n` +
+      `We are running low on "${p.name}" (SKU: ${p.sku}). Current stock is ${p.quantity} ` +
+      `(reorder threshold: ${p.reorder_threshold}).\n\n` +
+      `Please arrange a fresh supply of approximately ${suggestedQty} units at the earliest and share ` +
+      `expected dispatch date and pricing.\n\nThanks,\nStockSathi`
+    );
+    setSupplierMsgOpen(true);
+  };
+
+  const currentSupplier = supplierMsgProduct?.supplier_id ? supRecMap.get(supplierMsgProduct.supplier_id) ?? null : null;
+  const mailtoHref = currentSupplier?.email
+    ? `mailto:${currentSupplier.email}?subject=${encodeURIComponent(supplierMsgSubject)}&body=${encodeURIComponent(supplierMsgBody)}`
+    : "";
+  const telHref = currentSupplier?.phone ? `tel:${currentSupplier.phone.replace(/\s+/g, "")}` : "";
 
   const validateForm = (f: Form): FieldErrors => {
     const e: FieldErrors = {};
