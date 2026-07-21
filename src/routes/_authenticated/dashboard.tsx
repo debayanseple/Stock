@@ -82,25 +82,26 @@ function Dashboard() {
   const short = (n: string) => (n.length > 14 ? n.slice(0, 14) + "…" : n);
 
   // Top products by total movement in the window
-  const perProduct = new Map<string, { name: string; in: number; out: number; movement: number }>();
+  const perProduct = new Map<string, { name: string; In: number; Out: number; movement: number }>();
   rows.forEach((r) => {
     const key = r.product_id;
     const name = r.products?.name ?? "Deleted product";
-    const cur = perProduct.get(key) ?? { name, in: 0, out: 0, movement: 0 };
-    cur[r.type] += r.quantity;
+    const cur = perProduct.get(key) ?? { name, In: 0, Out: 0, movement: 0 };
+    if (r.type === "in") cur.In += r.quantity;
+    else cur.Out += r.quantity;
     cur.movement += r.quantity;
     perProduct.set(key, cur);
   });
   const topMovers = Array.from(perProduct.values())
     .sort((a, b) => b.movement - a.movement)
     .slice(0, 7)
-    .map((p) => ({ name: short(p.name), In: p.in, Out: p.out }));
+    .map((p) => ({ name: short(p.name), In: p.In, Out: p.Out }));
 
   // Top sellers (stock-out only) by revenue value
   const topSellers = Array.from(perProduct.entries())
     .map(([id, p]) => {
       const price = Number(rows.find((r) => r.product_id === id)?.products?.unit_price ?? 0);
-      return { name: p.name, units: p.out, value: p.out * price };
+      return { name: p.name, units: p.Out, value: p.Out * price };
     })
     .filter((p) => p.units > 0)
     .sort((a, b) => b.value - a.value)
@@ -116,7 +117,10 @@ function Dashboard() {
   rows.forEach((r) => {
     const key = format(new Date(r.created_at), "yyyy-MM-dd");
     const cur = dayMap.get(key);
-    if (cur) cur[r.type] += r.quantity;
+    if (cur) {
+      if (r.type === "in") cur.In += r.quantity;
+      else cur.Out += r.quantity;
+    }
   });
   const trend = Array.from(dayMap.values());
 
