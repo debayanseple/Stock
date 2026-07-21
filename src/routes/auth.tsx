@@ -152,6 +152,7 @@ function AuthPage() {
           )}
         </CardContent>
       </Card>
+      <p className="mt-4 text-xs text-muted-foreground">Powered by © ZeroTheorys</p>
     </div>
   );
 }
