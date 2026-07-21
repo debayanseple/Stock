@@ -468,8 +468,6 @@ function ProductsPage() {
                         : <Badge className="bg-success text-success-foreground hover:bg-success/90">{p.quantity}</Badge>}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" title="Stock in" onClick={() => setTxnOpen({ product: p, type: "in" })}><ArrowDownToLine className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" title="Stock out" onClick={() => setTxnOpen({ product: p, type: "out" })}><ArrowUpFromLine className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete "${p.name}"?`)) del.mutate(p.id); }}><Trash2 className="h-4 w-4" /></Button>
                     </TableCell>
