@@ -48,7 +48,38 @@ function TransactionsPage() {
         <p className="text-sm text-muted-foreground">Every stock-in and stock-out movement.</p>
         <Button variant="outline" onClick={exportCSV} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Export CSV</Button>
       </div>
-      <Card>
+      {/* Mobile card list */}
+      <div className="sm:hidden space-y-2">
+        {isLoading ? (
+          <Card><CardContent className="p-4 text-center text-sm text-muted-foreground">Loading…</CardContent></Card>
+        ) : data.length === 0 ? (
+          <Card><CardContent className="p-4 text-center text-sm text-muted-foreground">No transactions yet.</CardContent></Card>
+        ) : data.map((t) => (
+          <Card key={t.id}>
+            <CardContent className="p-3">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{t.products?.name ?? "Deleted"}</div>
+                  <div className="font-mono text-[11px] text-muted-foreground truncate">{t.products?.sku ?? ""}</div>
+                  <div className="text-[11px] text-muted-foreground mt-1">{format(new Date(t.created_at), "PPp")}</div>
+                </div>
+                <div className="shrink-0 flex flex-col items-end gap-1">
+                  {t.type === "in"
+                    ? <Badge>Stock in</Badge>
+                    : <Badge variant="secondary">Stock out</Badge>}
+                  <div className={`text-sm font-semibold ${t.type === "in" ? "text-success" : "text-warning"}`}>
+                    {t.type === "in" ? "+" : "−"}{t.quantity}
+                  </div>
+                </div>
+              </div>
+              {t.notes && <div className="mt-2 text-xs text-muted-foreground border-t pt-2">{t.notes}</div>}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <Card className="hidden sm:block">
         <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
