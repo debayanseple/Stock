@@ -1,0 +1,24 @@
+{
+  "name": "StockSathi — Inventory & Stock Management",
+  "short_name": "StockSathi",
+  "description": "Manage products, categories, suppliers, and stock movements with a clean inventory portal.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F1EFE8",
+  "theme_color": "#0F6E56",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
