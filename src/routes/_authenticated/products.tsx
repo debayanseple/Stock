@@ -55,6 +55,7 @@ function ProductsPage() {
   const [globalTxnNotes, setGlobalTxnNotes] = useState("");
   const [globalTxnError, setGlobalTxnError] = useState<string | null>(null);
   const globalTxnQtyRef = useRef<HTMLInputElement>(null);
+  const [quickTxnOpen, setQuickTxnOpen] = useState(false);
 
   const products = useQuery({
     queryKey: ["products"],
