@@ -48,6 +48,14 @@ function ProductsPage() {
   const [txnError, setTxnError] = useState<string | null>(null);
   const txnQtyRef = useRef<HTMLInputElement>(null);
 
+  const [globalTxnOpen, setGlobalTxnOpen] = useState(false);
+  const [globalTxnProductId, setGlobalTxnProductId] = useState("");
+  const [globalTxnType, setGlobalTxnType] = useState<"in" | "out">("in");
+  const [globalTxnQty, setGlobalTxnQty] = useState("1");
+  const [globalTxnNotes, setGlobalTxnNotes] = useState("");
+  const [globalTxnError, setGlobalTxnError] = useState<string | null>(null);
+  const globalTxnQtyRef = useRef<HTMLInputElement>(null);
+
   const products = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
