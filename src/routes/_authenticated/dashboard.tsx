@@ -3,13 +3,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, IndianRupee, AlertTriangle, ChevronRight } from "lucide-react";
+import { Package, IndianRupee, AlertTriangle, ChevronRight, RefreshCw, CheckCircle2 } from "lucide-react";
 import type { Category, Product, Transaction } from "@/lib/inventory-types";
 import { stockStatus, formatINR } from "@/lib/inventory-types";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend, PieChart, Pie, Cell } from "recharts";
 import { format, startOfQuarter, endOfQuarter, subQuarters, startOfYear, endOfYear, subYears, differenceInCalendarDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { PullToRefresh } from "@/components/pull-to-refresh";
@@ -127,6 +127,24 @@ function Dashboard() {
   });
 
   const items = products.data ?? [];
+
+  const lastUpdated = Math.max(
+    products.dataUpdatedAt || 0,
+    categories.dataUpdatedAt || 0,
+    recent.dataUpdatedAt || 0,
+    window.dataUpdatedAt || 0,
+  );
+  const isSyncing =
+    products.isFetching || categories.isFetching || recent.isFetching || window.isFetching;
+  const hasError = !!(products.error || categories.error || recent.error || window.error);
+  const [nowTick, setNowTick] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+  const lastUpdatedLabel = lastUpdated ? formatRelative(lastUpdated, nowTick) : "—";
+  const lastUpdatedFull = lastUpdated ? format(new Date(lastUpdated), "PPpp") : "";
+
   const totalProducts = items.length;
   const totalValue = items.reduce((s, p) => s + Number(p.unit_price) * p.quantity, 0);
   const lowStock = items.filter((p) => stockStatus(p) !== "ok");
@@ -199,7 +217,15 @@ function Dashboard() {
           <h2 className="text-lg font-semibold">Overview</h2>
           <p className="text-xs text-muted-foreground">Insights across your inventory and movements.</p>
         </div>
-        <Select value={range} onValueChange={(v) => setRange(v as Range)}>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <SyncStatus
+            isSyncing={isSyncing}
+            hasError={hasError}
+            label={lastUpdatedLabel}
+            title={lastUpdatedFull}
+            onRefresh={refreshAll}
+          />
+          <Select value={range} onValueChange={(v) => setRange(v as Range)}>
           <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Date range" />
           </SelectTrigger>
@@ -211,6 +237,7 @@ function Dashboard() {
             <SelectItem value="last_year">Last year</SelectItem>
           </SelectContent>
         </Select>
+        </div>
       </div>
 
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
