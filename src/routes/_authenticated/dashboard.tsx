@@ -3,13 +3,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, IndianRupee, AlertTriangle, ChevronRight } from "lucide-react";
+import { Package, IndianRupee, AlertTriangle, ChevronRight, RefreshCw, CheckCircle2 } from "lucide-react";
 import type { Category, Product, Transaction } from "@/lib/inventory-types";
 import { stockStatus, formatINR } from "@/lib/inventory-types";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend, PieChart, Pie, Cell } from "recharts";
 import { format, startOfQuarter, endOfQuarter, subQuarters, startOfYear, endOfYear, subYears, differenceInCalendarDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { PullToRefresh } from "@/components/pull-to-refresh";
@@ -127,6 +127,24 @@ function Dashboard() {
   });
 
   const items = products.data ?? [];
+
+  const lastUpdated = Math.max(
+    products.dataUpdatedAt || 0,
+    categories.dataUpdatedAt || 0,
+    recent.dataUpdatedAt || 0,
+    window.dataUpdatedAt || 0,
+  );
+  const isSyncing =
+    products.isFetching || categories.isFetching || recent.isFetching || window.isFetching;
+  const hasError = !!(products.error || categories.error || recent.error || window.error);
+  const [nowTick, setNowTick] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+  const lastUpdatedLabel = lastUpdated ? formatRelative(lastUpdated, nowTick) : "—";
+  const lastUpdatedFull = lastUpdated ? format(new Date(lastUpdated), "PPpp") : "";
+
   const totalProducts = items.length;
   const totalValue = items.reduce((s, p) => s + Number(p.unit_price) * p.quantity, 0);
   const lowStock = items.filter((p) => stockStatus(p) !== "ok");
@@ -199,7 +217,15 @@ function Dashboard() {
           <h2 className="text-lg font-semibold">Overview</h2>
           <p className="text-xs text-muted-foreground">Insights across your inventory and movements.</p>
         </div>
-        <Select value={range} onValueChange={(v) => setRange(v as Range)}>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <SyncStatus
+            isSyncing={isSyncing}
+            hasError={hasError}
+            label={lastUpdatedLabel}
+            title={lastUpdatedFull}
+            onRefresh={refreshAll}
+          />
+          <Select value={range} onValueChange={(v) => setRange(v as Range)}>
           <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Date range" />
           </SelectTrigger>
@@ -211,6 +237,7 @@ function Dashboard() {
             <SelectItem value="last_year">Last year</SelectItem>
           </SelectContent>
         </Select>
+        </div>
       </div>
 
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
@@ -365,6 +392,16 @@ function Dashboard() {
             <SheetDescription>
               {lowStock.length === 0 ? "Nothing to reorder — everything is above threshold." : `${lowStock.length} item${lowStock.length === 1 ? "" : "s"} at or below reorder threshold.`}
             </SheetDescription>
+            <div className="pt-1">
+              <SyncStatus
+                isSyncing={isSyncing}
+                hasError={hasError}
+                label={lastUpdatedLabel}
+                title={lastUpdatedFull}
+                onRefresh={refreshAll}
+                compact
+              />
+            </div>
           </SheetHeader>
           <div ref={sheetScrollRef} className="flex-1 overflow-y-auto -mx-6 px-6 py-2">
             <PullToRefresh onRefresh={refreshAll} scrollElement={sheetScrollRef.current} alwaysEnabled>
@@ -451,4 +488,71 @@ function StockBadge({ product }: { product: Product }) {
   if (s === "out") return <Badge variant="destructive">Out of stock</Badge>;
   if (s === "low") return <Badge className="bg-warning text-warning-foreground hover:bg-warning/90">Low · {product.quantity}</Badge>;
   return <Badge className="bg-success text-success-foreground hover:bg-success/90">{product.quantity}</Badge>;
+}
+
+function formatRelative(ts: number, now: number): string {
+  const diff = Math.max(0, now - ts);
+  const sec = Math.floor(diff / 1000);
+  if (sec < 10) return "just now";
+  if (sec < 60) return `${sec}s ago`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min} min ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} hr ago`;
+  const day = Math.floor(hr / 24);
+  return `${day}d ago`;
+}
+
+function SyncStatus({
+  isSyncing,
+  hasError,
+  label,
+  title,
+  onRefresh,
+  compact,
+}: {
+  isSyncing: boolean;
+  hasError: boolean;
+  label: string;
+  title?: string;
+  onRefresh: () => void | Promise<void>;
+  compact?: boolean;
+}) {
+  const status = hasError ? "Sync failed" : isSyncing ? "Syncing…" : "Up to date";
+  const dotCls = hasError
+    ? "bg-destructive"
+    : isSyncing
+    ? "bg-warning animate-pulse"
+    : "bg-success";
+  return (
+    <div
+      className={`flex items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 text-xs ${compact ? "" : "sm:text-xs"}`}
+      title={title}
+      aria-live="polite"
+    >
+      <span className={`inline-block h-2 w-2 rounded-full ${dotCls}`} aria-hidden />
+      <span className="text-muted-foreground">
+        <span className="font-medium text-foreground">{status}</span>
+        <span className="hidden sm:inline"> · Last updated {label}</span>
+        <span className="sm:hidden"> · {label}</span>
+      </span>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 shrink-0"
+        onClick={() => onRefresh()}
+        disabled={isSyncing}
+        aria-label="Refresh now"
+      >
+        {hasError ? (
+          <RefreshCw className="h-3.5 w-3.5 text-destructive" />
+        ) : isSyncing ? (
+          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+        )}
+      </Button>
+    </div>
+  );
 }
