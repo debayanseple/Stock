@@ -42,11 +42,6 @@ function ProductsPage() {
   const priceRef = useRef<HTMLInputElement>(null);
   const qtyRef = useRef<HTMLInputElement>(null);
   const thresholdRef = useRef<HTMLInputElement>(null);
-  const [txnOpen, setTxnOpen] = useState<{ product: Product; type: "in" | "out" } | null>(null);
-  const [txnQty, setTxnQty] = useState("1");
-  const [txnNotes, setTxnNotes] = useState("");
-  const [txnError, setTxnError] = useState<string | null>(null);
-  const txnQtyRef = useRef<HTMLInputElement>(null);
 
   const [globalTxnOpen, setGlobalTxnOpen] = useState(false);
   const [globalTxnProductId, setGlobalTxnProductId] = useState("");
@@ -55,6 +50,7 @@ function ProductsPage() {
   const [globalTxnNotes, setGlobalTxnNotes] = useState("");
   const [globalTxnError, setGlobalTxnError] = useState<string | null>(null);
   const globalTxnQtyRef = useRef<HTMLInputElement>(null);
+  const [quickTxnOpen, setQuickTxnOpen] = useState(false);
 
   const products = useQuery({
     queryKey: ["products"],
@@ -120,12 +116,6 @@ function ProductsPage() {
     }
   }, [open]);
 
-  useEffect(() => {
-    if (txnOpen) {
-      setTxnError(null);
-      setTimeout(() => txnQtyRef.current?.focus(), 50);
-    }
-  }, [txnOpen]);
 
   useEffect(() => {
     if (globalTxnOpen) {
@@ -199,36 +189,6 @@ function ProductsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const logTxn = useMutation({
-    mutationFn: async () => {
-      if (!txnOpen) return;
-      const qty = Number(txnQty);
-      if (txnQty === "" || !Number.isInteger(qty) || qty <= 0) {
-        setTxnError("Enter a whole number greater than 0");
-        txnQtyRef.current?.focus();
-        throw new Error("Enter a whole number greater than 0");
-      }
-      if (txnOpen.type === "out" && qty > txnOpen.product.quantity) {
-        setTxnError(`Only ${txnOpen.product.quantity} in stock — cannot remove more`);
-        txnQtyRef.current?.focus();
-        throw new Error("Insufficient stock");
-      }
-      const { error } = await supabase.from("transactions").insert({
-        product_id: txnOpen.product.id,
-        type: txnOpen.type,
-        quantity: qty,
-        notes: txnNotes || null,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Transaction recorded");
-      qc.invalidateQueries({ queryKey: ["products"] });
-      qc.invalidateQueries({ queryKey: ["transactions"] });
-      setTxnOpen(null); setTxnQty("1"); setTxnNotes(""); setTxnError(null);
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
 
   const recordGlobalTxn = useMutation({
     mutationFn: async () => {
@@ -316,11 +276,12 @@ function ProductsPage() {
           </div>
         </div>
         <div className="flex flex-col sm:flex-row items-end justify-end gap-2 w-full sm:w-auto">
-          <div className="flex items-center justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={() => setGlobalTxnOpen(true)} className="hidden sm:inline-flex"><ArrowLeftRight className="h-4 w-4 mr-1" /> Transaction</Button>
-          </div>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button onClick={openNew} className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-1" /> New product</Button></DialogTrigger>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button variant="outline" size="sm" onClick={() => setQuickTxnOpen(true)} className="shrink-0"><ArrowLeftRight className="h-4 w-4 mr-1" /> Quick transaction</Button>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={openNew} className="flex-1 sm:flex-none"><Plus className="h-4 w-4 mr-1" /> New product</Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>{editing ? "Edit product" : "New product"}</DialogTitle></DialogHeader>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -396,6 +357,7 @@ function ProductsPage() {
           </Dialog>
         </div>
       </div>
+      </div>
 
       {/* Mobile card list */}
       <div className="grid gap-3 sm:hidden">
@@ -424,8 +386,6 @@ function ProductsPage() {
                   <div><span className="block uppercase tracking-wide text-[10px]">Stock</span><span className="text-foreground">{p.quantity}</span></div>
                 </div>
                 <div className="flex gap-1 justify-end border-t pt-2 -mx-1">
-                  <Button variant="ghost" size="icon" title="Stock in" onClick={() => setTxnOpen({ product: p, type: "in" })}><ArrowDownToLine className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" title="Stock out" onClick={() => setTxnOpen({ product: p, type: "out" })}><ArrowUpFromLine className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete "${p.name}"?`)) del.mutate(p.id); }}><Trash2 className="h-4 w-4" /></Button>
                 </div>
@@ -469,8 +429,6 @@ function ProductsPage() {
                         : <Badge className="bg-success text-success-foreground hover:bg-success/90">{p.quantity}</Badge>}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" title="Stock in" onClick={() => setTxnOpen({ product: p, type: "in" })}><ArrowDownToLine className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" title="Stock out" onClick={() => setTxnOpen({ product: p, type: "out" })}><ArrowUpFromLine className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete "${p.name}"?`)) del.mutate(p.id); }}><Trash2 className="h-4 w-4" /></Button>
                     </TableCell>
@@ -488,8 +446,8 @@ function ProductsPage() {
 
       {/* Mobile transaction FAB */}
       <div className="fixed bottom-4 right-4 z-50 sm:hidden">
-        <Button onClick={() => setGlobalTxnOpen(true)} className="shadow-lg rounded-full h-14 px-4 gap-2">
-          <ArrowLeftRight className="h-5 w-5" /> Transaction
+        <Button onClick={() => setQuickTxnOpen(true)} className="shadow-lg rounded-full h-14 px-4 gap-2">
+          <ArrowLeftRight className="h-5 w-5" /> Quick transaction
         </Button>
       </div>
 
@@ -543,28 +501,21 @@ function ProductsPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!txnOpen} onOpenChange={(v) => { if (!v) setTxnOpen(null); }}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <Dialog open={quickTxnOpen} onOpenChange={setQuickTxnOpen}>
+        <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>
-              {txnOpen?.type === "in" ? "Stock in" : "Stock out"} — {txnOpen?.product.name}
-            </DialogTitle>
+            <DialogTitle>Quick transaction</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <div className="text-sm text-muted-foreground">Current stock: {txnOpen?.product.quantity ?? 0}</div>
-            <div className="space-y-1">
-              <Label htmlFor="txn-qty">Quantity *</Label>
-              <Input id="txn-qty" ref={txnQtyRef} type="number" inputMode="numeric" min="1" step="1" value={txnQty}
-                aria-invalid={!!txnError} aria-describedby={txnError ? "txn-qty-err" : undefined}
-                onChange={(e) => { setTxnQty(e.target.value); if (txnError) setTxnError(null); }} />
-              {txnError && <p id="txn-qty-err" className="text-xs text-destructive">{txnError}</p>}
-            </div>
-            <div className="space-y-1"><Label>Notes / reference</Label><Textarea value={txnNotes} onChange={(e) => setTxnNotes(e.target.value)} placeholder="PO number, customer, reason…" /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <Button onClick={() => { setGlobalTxnType("in"); setQuickTxnOpen(false); setGlobalTxnOpen(true); }} variant="outline" className="h-24 flex-col gap-2">
+              <ArrowDownToLine className="h-6 w-6" />
+              <span>Stock in</span>
+            </Button>
+            <Button onClick={() => { setGlobalTxnType("out"); setQuickTxnOpen(false); setGlobalTxnOpen(true); }} variant="outline" className="h-24 flex-col gap-2">
+              <ArrowUpFromLine className="h-6 w-6" />
+              <span>Stock out</span>
+            </Button>
           </div>
-          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setTxnOpen(null)}>Cancel</Button>
-            <Button onClick={() => logTxn.mutate()} disabled={logTxn.isPending}>Record</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
