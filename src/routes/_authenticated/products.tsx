@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Download, Search, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { Plus, Pencil, Trash2, Download, Search, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight } from "lucide-react";
 import type { Category, Product, Supplier } from "@/lib/inventory-types";
 import { stockStatus, downloadCSV } from "@/lib/inventory-types";
 
