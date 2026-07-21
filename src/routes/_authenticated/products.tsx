@@ -129,11 +129,11 @@ function ProductsPage() {
     setSupplierMsgProduct(p);
     setSupplierMsgSubject(`Reorder request: ${p.name} (SKU ${p.sku})`);
     setSupplierMsgBody(
-      `Hi${sup?.contact_name ? ` ${sup.contact_name}` : sup?.name ? ` ${sup.name}` : ""},\n\n` +
+      `Hi${sup?.name ? ` ${sup.name}` : ""},\n\n` +
       `We are running low on "${p.name}" (SKU: ${p.sku}). Current stock is ${p.quantity} ` +
       `(reorder threshold: ${p.reorder_threshold}).\n\n` +
       `Please arrange a fresh supply of approximately ${suggestedQty} units at the earliest and share ` +
-      `expected dispatch date and pricing.\n\nThanks,\nStockSathi`
+      `expected dispatch date and pricing.\n\nThanks,\nStockLine`
     );
     setSupplierMsgOpen(true);
   };
