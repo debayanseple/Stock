@@ -382,7 +382,7 @@ function ProductsPage() {
                 <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                   <div><span className="block uppercase tracking-wide text-[10px]">Category</span><span className="text-foreground">{catMap.get(p.category_id ?? "") ?? "—"}</span></div>
                   <div><span className="block uppercase tracking-wide text-[10px]">Supplier</span><span className="text-foreground">{supMap.get(p.supplier_id ?? "") ?? "—"}</span></div>
-                  <div><span className="block uppercase tracking-wide text-[10px]">Price</span><span className="text-foreground">${Number(p.unit_price).toFixed(2)}</span></div>
+                  <div><span className="block uppercase tracking-wide text-[10px]">Price</span><span className="text-foreground">{formatINR(Number(p.unit_price))}</span></div>
                   <div><span className="block uppercase tracking-wide text-[10px]">Stock</span><span className="text-foreground">{p.quantity}</span></div>
                 </div>
                 <div className="flex gap-1 justify-end border-t pt-2 -mx-1">
@@ -422,7 +422,7 @@ function ProductsPage() {
                     <TableCell className="font-mono text-xs">{p.sku}</TableCell>
                     <TableCell>{catMap.get(p.category_id ?? "") ?? "—"}</TableCell>
                     <TableCell>{supMap.get(p.supplier_id ?? "") ?? "—"}</TableCell>
-                    <TableCell className="text-right">${Number(p.unit_price).toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{formatINR(Number(p.unit_price))}</TableCell>
                     <TableCell className="text-right">
                       {s === "out" ? <Badge variant="destructive">Out</Badge>
                         : s === "low" ? <Badge className="bg-warning text-warning-foreground hover:bg-warning/90">Low · {p.quantity}</Badge>

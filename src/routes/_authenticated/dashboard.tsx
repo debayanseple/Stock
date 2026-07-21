@@ -3,9 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, DollarSign, AlertTriangle } from "lucide-react";
+import { Package, IndianRupee, AlertTriangle } from "lucide-react";
 import type { Category, Product, Transaction } from "@/lib/inventory-types";
-import { stockStatus } from "@/lib/inventory-types";
+import { stockStatus, formatINR } from "@/lib/inventory-types";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend, PieChart, Pie, Cell } from "recharts";
 import { format, startOfQuarter, endOfQuarter, subQuarters, startOfYear, endOfYear, subYears, differenceInCalendarDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -190,8 +190,8 @@ function Dashboard() {
         <StatCard label="Total products" value={totalProducts} icon={Package} />
         <StatCard
           label="Total stock value"
-          value={`$${totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
-          icon={DollarSign}
+          value={formatINR(totalValue)}
+          icon={IndianRupee}
         />
         <StatCard label="Low / out of stock" value={lowStock.length} icon={AlertTriangle} tone="warn" />
       </div>
@@ -251,7 +251,7 @@ function Dashboard() {
                       <span className="truncate font-medium">{p.name}</span>
                     </div>
                     <div className="text-right shrink-0">
-                      <div className="font-semibold">${p.value.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+                      <div className="font-semibold">{formatINR(p.value)}</div>
                       <div className="text-xs text-muted-foreground">{p.units} units out</div>
                     </div>
                   </li>
@@ -272,7 +272,7 @@ function Dashboard() {
                   <Pie data={catData} dataKey="value" nameKey="name" outerRadius={80} innerRadius={40} paddingAngle={2}>
                     {catData.map((_, i) => <Cell key={i} fill={pieColors[i % pieColors.length]} />)}
                   </Pie>
-                  <Tooltip formatter={(v: number) => `$${v.toLocaleString(undefined, { maximumFractionDigits: 2 })}`} />
+                  <Tooltip formatter={(v: number) => formatINR(v)} />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
                 </PieChart>
               </ResponsiveContainer>
