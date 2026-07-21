@@ -79,12 +79,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "StockSathi — Inventory & Stock Management" },
+      { title: "Stock Line — Inventory & Stock Management" },
       { name: "description", content: "Manage products, categories, suppliers, and stock movements with a clean inventory portal." },
-      { property: "og:title", content: "StockSathi — Inventory & Stock Management" },
+      { property: "og:title", content: "Stock Line — Inventory & Stock Management" },
       { property: "og:description", content: "Manage products, categories, suppliers, and stock movements with a clean inventory portal." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Stock Line — Inventory & Stock Management" },
+      { name: "twitter:description", content: "Manage products, categories, suppliers, and stock movements with a clean inventory portal." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/01cf6244-df0f-4517-8aca-82842874656e" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/01cf6244-df0f-4517-8aca-82842874656e" },
     ],
     links: [
       {
