@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Download, Search, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { Plus, Pencil, Trash2, Download, Search, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight } from "lucide-react";
 import type { Category, Product, Supplier } from "@/lib/inventory-types";
 import { stockStatus, downloadCSV } from "@/lib/inventory-types";
 
@@ -47,6 +47,14 @@ function ProductsPage() {
   const [txnNotes, setTxnNotes] = useState("");
   const [txnError, setTxnError] = useState<string | null>(null);
   const txnQtyRef = useRef<HTMLInputElement>(null);
+
+  const [globalTxnOpen, setGlobalTxnOpen] = useState(false);
+  const [globalTxnProductId, setGlobalTxnProductId] = useState("");
+  const [globalTxnType, setGlobalTxnType] = useState<"in" | "out">("in");
+  const [globalTxnQty, setGlobalTxnQty] = useState("1");
+  const [globalTxnNotes, setGlobalTxnNotes] = useState("");
+  const [globalTxnError, setGlobalTxnError] = useState<string | null>(null);
+  const globalTxnQtyRef = useRef<HTMLInputElement>(null);
 
   const products = useQuery({
     queryKey: ["products"],
@@ -118,6 +126,13 @@ function ProductsPage() {
       setTimeout(() => txnQtyRef.current?.focus(), 50);
     }
   }, [txnOpen]);
+
+  useEffect(() => {
+    if (globalTxnOpen) {
+      setGlobalTxnError(null);
+      setTimeout(() => globalTxnQtyRef.current?.focus(), 50);
+    }
+  }, [globalTxnOpen]);
 
   const filtered = (products.data ?? []).filter((p) => {
     if (search) {
@@ -215,6 +230,41 @@ function ProductsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const recordGlobalTxn = useMutation({
+    mutationFn: async () => {
+      const product = products.data?.find((p) => p.id === globalTxnProductId);
+      if (!product) {
+        setGlobalTxnError("Select a product");
+        throw new Error("Select a product");
+      }
+      const qty = Number(globalTxnQty);
+      if (globalTxnQty === "" || !Number.isInteger(qty) || qty <= 0) {
+        setGlobalTxnError("Enter a whole number greater than 0");
+        globalTxnQtyRef.current?.focus();
+        throw new Error("Enter a whole number greater than 0");
+      }
+      if (globalTxnType === "out" && qty > product.quantity) {
+        setGlobalTxnError(`Only ${product.quantity} in stock — cannot remove more`);
+        globalTxnQtyRef.current?.focus();
+        throw new Error("Insufficient stock");
+      }
+      const { error } = await supabase.from("transactions").insert({
+        product_id: product.id,
+        type: globalTxnType,
+        quantity: qty,
+        notes: globalTxnNotes || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Transaction recorded");
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["transactions"] });
+      setGlobalTxnOpen(false); setGlobalTxnProductId(""); setGlobalTxnType("in"); setGlobalTxnQty("1"); setGlobalTxnNotes(""); setGlobalTxnError(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const openNew = () => { setEditing(null); setForm(emptyForm); setOpen(true); };
   const openEdit = (p: Product) => {
     setEditing(p);
@@ -265,8 +315,9 @@ function ProductsPage() {
           </Select>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:flex">
-          <Button variant="outline" onClick={exportCSV} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> CSV</Button>
+        <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
+          <Button variant="outline" size="sm" onClick={exportCSV} className="ml-auto sm:ml-0"><Download className="h-4 w-4 mr-1" /> CSV</Button>
+          <Button variant="outline" size="sm" onClick={() => setGlobalTxnOpen(true)} className="hidden sm:inline-flex"><ArrowLeftRight className="h-4 w-4 mr-1" /> Transaction</Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button onClick={openNew} className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-1" /> New product</Button></DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -429,6 +480,63 @@ function ProductsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Mobile transaction FAB */}
+      <div className="fixed bottom-4 right-4 z-50 sm:hidden">
+        <Button onClick={() => setGlobalTxnOpen(true)} className="shadow-lg rounded-full h-14 px-4 gap-2">
+          <ArrowLeftRight className="h-5 w-5" /> Transaction
+        </Button>
+      </div>
+
+      <Dialog open={globalTxnOpen} onOpenChange={setGlobalTxnOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Record transaction</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label>Product *</Label>
+              <Select value={globalTxnProductId} onValueChange={setGlobalTxnProductId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a product" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(products.data ?? []).map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name} · {p.sku} ({p.quantity} in stock)</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>Type *</Label>
+              <Select value={globalTxnType} onValueChange={(v) => setGlobalTxnType(v as "in" | "out")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="in">Stock in</SelectItem>
+                  <SelectItem value="out">Stock out</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="global-txn-qty">Quantity *</Label>
+              <Input id="global-txn-qty" ref={globalTxnQtyRef} type="number" inputMode="numeric" min="1" step="1" value={globalTxnQty}
+                aria-invalid={!!globalTxnError} aria-describedby={globalTxnError ? "global-txn-qty-err" : undefined}
+                onChange={(e) => { setGlobalTxnQty(e.target.value); if (globalTxnError) setGlobalTxnError(null); }} />
+              {globalTxnError && <p id="global-txn-qty-err" className="text-xs text-destructive">{globalTxnError}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label>Notes / reference</Label>
+              <Textarea value={globalTxnNotes} onChange={(e) => setGlobalTxnNotes(e.target.value)} placeholder="PO number, customer, reason…" />
+            </div>
+          </div>
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setGlobalTxnOpen(false)}>Cancel</Button>
+            <Button onClick={() => recordGlobalTxn.mutate()} disabled={recordGlobalTxn.isPending || !globalTxnProductId || !products.data?.length}>Record</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!txnOpen} onOpenChange={(v) => { if (!v) setTxnOpen(null); }}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
