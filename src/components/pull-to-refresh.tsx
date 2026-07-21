@@ -96,7 +96,7 @@ export function PullToRefresh({
   const showIndicator = enabled && (pull > 0 || refreshing);
 
   return (
-    <div ref={containerRef} className={className} style={{ touchAction: enabled ? "pan-x" : undefined }}>
+    <div ref={containerRef} className={className}>
       {showIndicator && (
         <div
           className="flex items-center justify-center overflow-hidden text-primary transition-[height] duration-150"
