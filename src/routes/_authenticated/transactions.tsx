@@ -11,7 +11,16 @@ import type { Transaction } from "@/lib/inventory-types";
 import { downloadCSV } from "@/lib/inventory-types";
 
 export const Route = createFileRoute("/_authenticated/transactions")({
-  head: () => ({ meta: [{ title: "Transactions — StockHub" }] }),
+  head: () => ({
+    meta: [
+      { title: "Transactions — StockSathi" },
+      { name: "description", content: "Review the full audit log of stock-in and stock-out movements across your inventory." },
+      { property: "og:title", content: "Transactions — StockSathi" },
+      { property: "og:description", content: "Review the full audit log of stock-in and stock-out movements across your inventory." },
+      { property: "og:url", content: "/transactions" },
+    ],
+    links: [{ rel: "canonical", href: "/transactions" }],
+  }),
   component: TransactionsPage,
 });
 
