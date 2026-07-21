@@ -16,7 +16,16 @@ import { PullToRefresh } from "@/components/pull-to-refresh";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — StockSathi" }] }),
+  head: () => ({
+    meta: [
+      { title: "Dashboard — StockSathi" },
+      { name: "description", content: "See total products, stock value, low-stock alerts, and recent movement trends at a glance." },
+      { property: "og:title", content: "Dashboard — StockSathi" },
+      { property: "og:description", content: "See total products, stock value, low-stock alerts, and recent movement trends at a glance." },
+      { property: "og:url", content: "/dashboard" },
+    ],
+    links: [{ rel: "canonical", href: "/dashboard" }],
+  }),
   component: Dashboard,
 });
 
