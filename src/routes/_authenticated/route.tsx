@@ -94,7 +94,7 @@ function LayoutShell() {
           </SidebarContent>
           <SidebarFooter className="border-t">
             <div className="px-2 py-2 text-xs text-sidebar-foreground/80 truncate group-data-[collapsible=icon]:hidden">
-              {user?.email}
+              {(user?.user_metadata as { full_name?: string } | undefined)?.full_name || user?.email}
             </div>
             <Button variant="ghost" size="sm" onClick={signOut} className="justify-start">
               <LogOut className="h-4 w-4" />
