@@ -130,13 +130,13 @@ function Dashboard() {
 function StatCard({ label, value, icon: Icon, tone }: { label: string; value: React.ReactNode; icon: React.ElementType; tone?: "warn" }) {
   return (
     <Card>
-      <CardContent className="pt-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-            <div className="text-2xl font-semibold mt-1">{value}</div>
+      <CardContent className="pt-4 sm:pt-6">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="text-[10px] sm:text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+            <div className="text-lg sm:text-2xl font-semibold mt-1 break-words">{value}</div>
           </div>
-          <div className={`h-9 w-9 rounded-md flex items-center justify-center ${tone === "warn" ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
+          <div className={`h-8 w-8 sm:h-9 sm:w-9 shrink-0 rounded-md flex items-center justify-center ${tone === "warn" ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
             <Icon className="h-4 w-4" />
           </div>
         </div>
