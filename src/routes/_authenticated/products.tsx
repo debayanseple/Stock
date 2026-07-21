@@ -481,6 +481,63 @@ function ProductsPage() {
         </CardContent>
       </Card>
 
+      {/* Mobile transaction FAB */}
+      <div className="fixed bottom-4 right-4 z-50 sm:hidden">
+        <Button onClick={() => setGlobalTxnOpen(true)} className="shadow-lg rounded-full h-14 px-4 gap-2">
+          <ArrowLeftRight className="h-5 w-5" /> Transaction
+        </Button>
+      </div>
+
+      <Dialog open={globalTxnOpen} onOpenChange={setGlobalTxnOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Record transaction</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label>Product *</Label>
+              <Select value={globalTxnProductId} onValueChange={setGlobalTxnProductId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a product" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(products.data ?? []).map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name} · {p.sku} ({p.quantity} in stock)</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>Type *</Label>
+              <Select value={globalTxnType} onValueChange={(v) => setGlobalTxnType(v as "in" | "out")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="in">Stock in</SelectItem>
+                  <SelectItem value="out">Stock out</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="global-txn-qty">Quantity *</Label>
+              <Input id="global-txn-qty" ref={globalTxnQtyRef} type="number" inputMode="numeric" min="1" step="1" value={globalTxnQty}
+                aria-invalid={!!globalTxnError} aria-describedby={globalTxnError ? "global-txn-qty-err" : undefined}
+                onChange={(e) => { setGlobalTxnQty(e.target.value); if (globalTxnError) setGlobalTxnError(null); }} />
+              {globalTxnError && <p id="global-txn-qty-err" className="text-xs text-destructive">{globalTxnError}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label>Notes / reference</Label>
+              <Textarea value={globalTxnNotes} onChange={(e) => setGlobalTxnNotes(e.target.value)} placeholder="PO number, customer, reason…" />
+            </div>
+          </div>
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setGlobalTxnOpen(false)}>Cancel</Button>
+            <Button onClick={() => recordGlobalTxn.mutate()} disabled={recordGlobalTxn.isPending || !globalTxnProductId || !products.data?.length}>Record</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!txnOpen} onOpenChange={(v) => { if (!v) setTxnOpen(null); }}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
