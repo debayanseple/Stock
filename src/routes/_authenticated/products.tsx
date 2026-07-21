@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Download, Search, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight, Mail, Phone } from "lucide-react";
+import { Plus, Pencil, Trash2, Download, Search, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight, Mail, Phone, History } from "lucide-react";
 import type { Category, Product, Supplier } from "@/lib/inventory-types";
 import { stockStatus, downloadCSV, formatINR } from "@/lib/inventory-types";
 
@@ -56,6 +56,34 @@ function ProductsPage() {
   const [supplierMsgProduct, setSupplierMsgProduct] = useState<Product | null>(null);
   const [supplierMsgSubject, setSupplierMsgSubject] = useState("");
   const [supplierMsgBody, setSupplierMsgBody] = useState("");
+  const [confirmChannel, setConfirmChannel] = useState<null | "email" | "call">(null);
+
+  type SupplierMessage = {
+    id: string;
+    product_id: string;
+    supplier_id: string | null;
+    channel: string;
+    recipient: string | null;
+    subject: string | null;
+    body: string | null;
+    quantity_at_send: number | null;
+    threshold_at_send: number | null;
+    created_at: string;
+  };
+
+  const supplierMessages = useQuery({
+    queryKey: ["supplier_messages", supplierMsgProduct?.id],
+    enabled: !!supplierMsgProduct,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("supplier_messages")
+        .select("*")
+        .eq("product_id", supplierMsgProduct!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as SupplierMessage[];
+    },
+  });
 
   const products = useQuery({
     queryKey: ["products"],
