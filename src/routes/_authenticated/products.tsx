@@ -127,6 +127,13 @@ function ProductsPage() {
     }
   }, [txnOpen]);
 
+  useEffect(() => {
+    if (globalTxnOpen) {
+      setGlobalTxnError(null);
+      setTimeout(() => globalTxnQtyRef.current?.focus(), 50);
+    }
+  }, [globalTxnOpen]);
+
   const filtered = (products.data ?? []).filter((p) => {
     if (search) {
       const q = search.toLowerCase();
