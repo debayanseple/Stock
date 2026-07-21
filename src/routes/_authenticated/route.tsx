@@ -56,7 +56,7 @@ function AuthedLayout() {
               <div className="h-8 w-8 rounded-md bg-primary text-primary-foreground flex items-center justify-center">
                 <Package className="h-4 w-4" />
               </div>
-              <div className="font-semibold group-data-[collapsible=icon]:hidden">StockHub</div>
+              <div className="font-semibold group-data-[collapsible=icon]:hidden">StockSathi</div>
             </div>
           </SidebarHeader>
           <SidebarContent>
@@ -92,7 +92,7 @@ function AuthedLayout() {
           <header className="h-14 flex items-center gap-2 border-b bg-background px-4 sticky top-0 z-10">
             <SidebarTrigger />
             <h1 className="font-semibold capitalize">
-              {navItems.find((n) => n.url === pathname)?.title ?? "StockHub"}
+              {navItems.find((n) => n.url === pathname)?.title ?? "StockSathi"}
             </h1>
           </header>
           <main className="flex-1 p-4 md:p-6">
