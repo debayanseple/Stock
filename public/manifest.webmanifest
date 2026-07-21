@@ -20,5 +20,14 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
+  ],
+  "screenshots": [
+    {
+      "src": "/__l5e/assets-v1/db5d4a45-3df3-4c05-a2e5-7e6c34085272/stocksathi-splash.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "StockSathi splash screen"
+    }
   ]
 }

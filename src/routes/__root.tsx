@@ -10,6 +10,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import splashAsset from "../assets/stocksathi-splash.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -92,6 +93,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "icon", href: "/logo.png", type: "image/png" },
       { rel: "apple-touch-icon", href: "/logo.png", sizes: "192x192" },
+      {
+        rel: "apple-touch-startup-image",
+        href: splashAsset.url,
+        media: "(orientation: portrait)",
+      },
       { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
