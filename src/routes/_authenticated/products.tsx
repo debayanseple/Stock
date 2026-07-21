@@ -242,7 +242,9 @@ function ProductsPage() {
       name: p.name, sku: p.sku,
       category: catMap.get(p.category_id ?? "") ?? "",
       supplier: supMap.get(p.supplier_id ?? "") ?? "",
-      unit_price: p.unit_price, quantity: p.quantity,
+      "unit_price_inr": Number(p.unit_price).toFixed(2),
+      quantity: p.quantity,
+      "stock_value_inr": (Number(p.unit_price) * p.quantity).toFixed(2),
       reorder_threshold: p.reorder_threshold,
       status: stockStatus(p),
     })));
