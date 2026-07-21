@@ -27,6 +27,7 @@ function AuthPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -49,11 +50,15 @@ function AuthPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!fullName.trim()) return toast.error("Please enter your name");
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+      options: {
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+        data: { full_name: fullName.trim() },
+      },
     });
     setLoading(false);
     if (error) return toast.error(error.message);
@@ -128,6 +133,10 @@ function AuthPage() {
             </TabsContent>
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="su-name">Name</Label>
+                  <Input id="su-name" type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="su-email">Email</Label>
                   <Input id="su-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
