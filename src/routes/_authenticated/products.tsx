@@ -272,8 +272,22 @@ function ProductsPage() {
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>{editing ? "Edit product" : "New product"}</DialogTitle></DialogHeader>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1 col-span-2"><Label>Name *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-                <div className="space-y-1"><Label>SKU *</Label><Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} /></div>
+                <div className="space-y-1 col-span-2">
+                  <Label htmlFor="p-name">Name *</Label>
+                  <Input id="p-name" ref={nameRef} value={form.name}
+                    aria-invalid={!!errors.name} aria-describedby={errors.name ? "p-name-err" : undefined}
+                    onChange={(e) => setField("name", e.target.value)}
+                    onBlur={() => setErrors((p) => ({ ...p, name: validateForm(form).name }))} />
+                  {errors.name && <p id="p-name-err" className="text-xs text-destructive">{errors.name}</p>}
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="p-sku">SKU *</Label>
+                  <Input id="p-sku" ref={skuRef} value={form.sku} autoCapitalize="characters"
+                    aria-invalid={!!errors.sku} aria-describedby={errors.sku ? "p-sku-err" : undefined}
+                    onChange={(e) => setField("sku", e.target.value)}
+                    onBlur={() => setErrors((p) => ({ ...p, sku: validateForm(form).sku }))} />
+                  {errors.sku && <p id="p-sku-err" className="text-xs text-destructive">{errors.sku}</p>}
+                </div>
                 <div className="space-y-1">
                   <Label>Category</Label>
                   <Select value={form.category_id || "__none"} onValueChange={(v) => setForm({ ...form, category_id: v === "__none" ? "" : v })}>
@@ -294,9 +308,32 @@ function ProductsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1"><Label>Unit price</Label><Input type="number" min="0" step="0.01" value={form.unit_price} onChange={(e) => setForm({ ...form, unit_price: e.target.value })} /></div>
-                <div className="space-y-1"><Label>Quantity {editing && <span className="text-xs text-muted-foreground">(use transactions to change stock)</span>}</Label><Input type="number" min="0" step="1" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} disabled={!!editing} /></div>
-                <div className="space-y-1"><Label>Reorder threshold</Label><Input type="number" min="0" step="1" value={form.reorder_threshold} onChange={(e) => setForm({ ...form, reorder_threshold: e.target.value })} /></div>
+                <div className="space-y-1">
+                  <Label htmlFor="p-price">Unit price</Label>
+                  <Input id="p-price" ref={priceRef} type="number" inputMode="decimal" min="0" step="0.01" value={form.unit_price}
+                    aria-invalid={!!errors.unit_price} aria-describedby={errors.unit_price ? "p-price-err" : undefined}
+                    onChange={(e) => setField("unit_price", e.target.value)}
+                    onBlur={() => setErrors((p) => ({ ...p, unit_price: validateForm(form).unit_price }))} />
+                  {errors.unit_price && <p id="p-price-err" className="text-xs text-destructive">{errors.unit_price}</p>}
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="p-qty">Quantity {editing && <span className="text-xs text-muted-foreground">(use transactions to change stock)</span>}</Label>
+                  <Input id="p-qty" ref={qtyRef} type="number" inputMode="numeric" min="0" step="1" value={form.quantity} disabled={!!editing}
+                    aria-invalid={!!errors.quantity} aria-describedby={errors.quantity ? "p-qty-err" : undefined}
+                    onChange={(e) => setField("quantity", e.target.value)}
+                    onBlur={() => setErrors((p) => ({ ...p, quantity: validateForm(form).quantity }))} />
+                  {errors.quantity && <p id="p-qty-err" className="text-xs text-destructive">{errors.quantity}</p>}
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="p-threshold">Reorder threshold</Label>
+                  <Input id="p-threshold" ref={thresholdRef} type="number" inputMode="numeric" min="0" step="1" value={form.reorder_threshold}
+                    aria-invalid={!!errors.reorder_threshold} aria-describedby={errors.reorder_threshold ? "p-threshold-err" : undefined}
+                    onChange={(e) => setField("reorder_threshold", e.target.value)}
+                    onBlur={() => setErrors((p) => ({ ...p, reorder_threshold: validateForm(form).reorder_threshold }))} />
+                  {errors.reorder_threshold
+                    ? <p id="p-threshold-err" className="text-xs text-destructive">{errors.reorder_threshold}</p>
+                    : <p className="text-xs text-muted-foreground">Alert when stock falls to or below this number.</p>}
+                </div>
                 <div className="space-y-1 col-span-2"><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
               </div>
               <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
@@ -402,7 +439,13 @@ function ProductsPage() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="text-sm text-muted-foreground">Current stock: {txnOpen?.product.quantity ?? 0}</div>
-            <div className="space-y-1"><Label>Quantity *</Label><Input type="number" min="1" step="1" value={txnQty} onChange={(e) => setTxnQty(e.target.value)} /></div>
+            <div className="space-y-1">
+              <Label htmlFor="txn-qty">Quantity *</Label>
+              <Input id="txn-qty" ref={txnQtyRef} type="number" inputMode="numeric" min="1" step="1" value={txnQty}
+                aria-invalid={!!txnError} aria-describedby={txnError ? "txn-qty-err" : undefined}
+                onChange={(e) => { setTxnQty(e.target.value); if (txnError) setTxnError(null); }} />
+              {txnError && <p id="txn-qty-err" className="text-xs text-destructive">{txnError}</p>}
+            </div>
             <div className="space-y-1"><Label>Notes / reference</Label><Textarea value={txnNotes} onChange={(e) => setTxnNotes(e.target.value)} placeholder="PO number, customer, reason…" /></div>
           </div>
           <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
