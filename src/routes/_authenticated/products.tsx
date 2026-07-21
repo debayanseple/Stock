@@ -116,12 +116,6 @@ function ProductsPage() {
     }
   }, [open]);
 
-  useEffect(() => {
-    if (txnOpen) {
-      setTxnError(null);
-      setTimeout(() => txnQtyRef.current?.focus(), 50);
-    }
-  }, [txnOpen]);
 
   useEffect(() => {
     if (globalTxnOpen) {
@@ -195,36 +189,6 @@ function ProductsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const logTxn = useMutation({
-    mutationFn: async () => {
-      if (!txnOpen) return;
-      const qty = Number(txnQty);
-      if (txnQty === "" || !Number.isInteger(qty) || qty <= 0) {
-        setTxnError("Enter a whole number greater than 0");
-        txnQtyRef.current?.focus();
-        throw new Error("Enter a whole number greater than 0");
-      }
-      if (txnOpen.type === "out" && qty > txnOpen.product.quantity) {
-        setTxnError(`Only ${txnOpen.product.quantity} in stock — cannot remove more`);
-        txnQtyRef.current?.focus();
-        throw new Error("Insufficient stock");
-      }
-      const { error } = await supabase.from("transactions").insert({
-        product_id: txnOpen.product.id,
-        type: txnOpen.type,
-        quantity: qty,
-        notes: txnNotes || null,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Transaction recorded");
-      qc.invalidateQueries({ queryKey: ["products"] });
-      qc.invalidateQueries({ queryKey: ["transactions"] });
-      setTxnOpen(null); setTxnQty("1"); setTxnNotes(""); setTxnError(null);
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
 
   const recordGlobalTxn = useMutation({
     mutationFn: async () => {
