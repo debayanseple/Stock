@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,7 @@ type Form = {
   name: string; sku: string; category_id: string; supplier_id: string;
   unit_price: string; quantity: string; reorder_threshold: string; description: string;
 };
+type FieldErrors = Partial<Record<"name" | "sku" | "unit_price" | "quantity" | "reorder_threshold", string>>;
 const emptyForm: Form = { name: "", sku: "", category_id: "", supplier_id: "", unit_price: "0", quantity: "0", reorder_threshold: "0", description: "" };
 
 function ProductsPage() {
@@ -35,9 +36,17 @@ function ProductsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [form, setForm] = useState<Form>(emptyForm);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const nameRef = useRef<HTMLInputElement>(null);
+  const skuRef = useRef<HTMLInputElement>(null);
+  const priceRef = useRef<HTMLInputElement>(null);
+  const qtyRef = useRef<HTMLInputElement>(null);
+  const thresholdRef = useRef<HTMLInputElement>(null);
   const [txnOpen, setTxnOpen] = useState<{ product: Product; type: "in" | "out" } | null>(null);
   const [txnQty, setTxnQty] = useState("1");
   const [txnNotes, setTxnNotes] = useState("");
+  const [txnError, setTxnError] = useState<string | null>(null);
+  const txnQtyRef = useRef<HTMLInputElement>(null);
 
   const products = useQuery({
     queryKey: ["products"],
@@ -67,6 +76,49 @@ function ProductsPage() {
   const catMap = useMemo(() => new Map((categories.data ?? []).map((c) => [c.id, c.name])), [categories.data]);
   const supMap = useMemo(() => new Map((suppliers.data ?? []).map((s) => [s.id, s.name])), [suppliers.data]);
 
+  const validateForm = (f: Form): FieldErrors => {
+    const e: FieldErrors = {};
+    if (!f.name.trim()) e.name = "Name is required";
+    const sku = f.sku.trim();
+    if (!sku) e.sku = "SKU is required";
+    else {
+      const dup = (products.data ?? []).some((p) => p.sku.toLowerCase() === sku.toLowerCase() && p.id !== editing?.id);
+      if (dup) e.sku = "SKU must be unique";
+    }
+    const price = Number(f.unit_price);
+    if (f.unit_price === "" || Number.isNaN(price) || price < 0) e.unit_price = "Enter a price ≥ 0";
+    const qty = Number(f.quantity);
+    if (f.quantity === "" || !Number.isInteger(qty) || qty < 0) e.quantity = "Whole number ≥ 0";
+    const th = Number(f.reorder_threshold);
+    if (f.reorder_threshold === "" || !Number.isInteger(th) || th < 0) e.reorder_threshold = "Whole number ≥ 0";
+    return e;
+  };
+
+  const setField = <K extends keyof Form>(k: K, v: Form[K]) => {
+    setForm((prev) => {
+      const next = { ...prev, [k]: v };
+      if (errors[k as keyof FieldErrors]) {
+        const e = validateForm(next);
+        setErrors((prevErr) => ({ ...prevErr, [k]: e[k as keyof FieldErrors] }));
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    if (open) {
+      setErrors({});
+      setTimeout(() => nameRef.current?.focus(), 50);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (txnOpen) {
+      setTxnError(null);
+      setTimeout(() => txnQtyRef.current?.focus(), 50);
+    }
+  }, [txnOpen]);
+
   const filtered = (products.data ?? []).filter((p) => {
     if (search) {
       const q = search.toLowerCase();
@@ -79,14 +131,20 @@ function ProductsPage() {
 
   const save = useMutation({
     mutationFn: async () => {
-      if (!form.name.trim()) throw new Error("Name is required");
-      if (!form.sku.trim()) throw new Error("SKU is required");
+      const eMap = validateForm(form);
+      if (Object.keys(eMap).length) {
+        setErrors(eMap);
+        const order: (keyof FieldErrors)[] = ["name", "sku", "unit_price", "quantity", "reorder_threshold"];
+        const refs: Record<keyof FieldErrors, React.RefObject<HTMLInputElement | null>> = {
+          name: nameRef, sku: skuRef, unit_price: priceRef, quantity: qtyRef, reorder_threshold: thresholdRef,
+        };
+        const first = order.find((k) => eMap[k]);
+        if (first) refs[first].current?.focus();
+        throw new Error(eMap[first!] ?? "Please fix the errors");
+      }
       const unit_price = Number(form.unit_price);
       const quantity = Number(form.quantity);
       const reorder_threshold = Number(form.reorder_threshold);
-      if (Number.isNaN(unit_price) || unit_price < 0) throw new Error("Unit price must be ≥ 0");
-      if (!Number.isInteger(quantity) || quantity < 0) throw new Error("Quantity must be ≥ 0");
-      if (!Number.isInteger(reorder_threshold) || reorder_threshold < 0) throw new Error("Reorder threshold must be ≥ 0");
       const payload = {
         name: form.name.trim(),
         sku: form.sku.trim(),
@@ -97,10 +155,16 @@ function ProductsPage() {
       };
       if (editing) {
         const { error } = await supabase.from("products").update(payload).eq("id", editing.id);
-        if (error) throw error;
+        if (error) {
+          if (error.code === "23505") { setErrors((p) => ({ ...p, sku: "SKU must be unique" })); skuRef.current?.focus(); }
+          throw error;
+        }
       } else {
         const { error } = await supabase.from("products").insert(payload);
-        if (error) throw error;
+        if (error) {
+          if (error.code === "23505") { setErrors((p) => ({ ...p, sku: "SKU must be unique" })); skuRef.current?.focus(); }
+          throw error;
+        }
       }
     },
     onSuccess: () => {
@@ -124,7 +188,16 @@ function ProductsPage() {
     mutationFn: async () => {
       if (!txnOpen) return;
       const qty = Number(txnQty);
-      if (!Number.isInteger(qty) || qty <= 0) throw new Error("Quantity must be > 0");
+      if (txnQty === "" || !Number.isInteger(qty) || qty <= 0) {
+        setTxnError("Enter a whole number greater than 0");
+        txnQtyRef.current?.focus();
+        throw new Error("Enter a whole number greater than 0");
+      }
+      if (txnOpen.type === "out" && qty > txnOpen.product.quantity) {
+        setTxnError(`Only ${txnOpen.product.quantity} in stock — cannot remove more`);
+        txnQtyRef.current?.focus();
+        throw new Error("Insufficient stock");
+      }
       const { error } = await supabase.from("transactions").insert({
         product_id: txnOpen.product.id,
         type: txnOpen.type,
@@ -137,7 +210,7 @@ function ProductsPage() {
       toast.success("Transaction recorded");
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["transactions"] });
-      setTxnOpen(null); setTxnQty("1"); setTxnNotes("");
+      setTxnOpen(null); setTxnQty("1"); setTxnNotes(""); setTxnError(null);
     },
     onError: (e: Error) => toast.error(e.message),
   });
