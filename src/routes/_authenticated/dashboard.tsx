@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,9 +9,11 @@ import { stockStatus, formatINR } from "@/lib/inventory-types";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend, PieChart, Pie, Cell } from "recharts";
 import { format, startOfQuarter, endOfQuarter, subQuarters, startOfYear, endOfYear, subYears, differenceInCalendarDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { PullToRefresh } from "@/components/pull-to-refresh";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — StockSathi" }] }),
@@ -55,6 +57,17 @@ function Dashboard() {
   const [range, setRange] = useState<Range>("30");
   const [lowOpen, setLowOpen] = useState(false);
   const navigate = useNavigate();
+  const qc = useQueryClient();
+  const sheetScrollRef = useRef<HTMLDivElement>(null);
+
+  const refreshAll = async () => {
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["products"] }),
+      qc.invalidateQueries({ queryKey: ["categories"] }),
+      qc.invalidateQueries({ queryKey: ["transactions"] }),
+    ]);
+    toast.success("Stock levels updated");
+  };
   const { since, until, days, label: rangeLabel } = useMemo(() => resolveRange(range), [range]);
   const sinceIso = since.toISOString();
   const untilIso = until.toISOString();
@@ -170,6 +183,7 @@ function Dashboard() {
   const pieColors = ["var(--primary)", "var(--accent-brand)", "var(--success)", "var(--warning)", "var(--primary-glow)", "var(--destructive)", "var(--muted-foreground)"];
 
   return (
+    <PullToRefresh onRefresh={refreshAll}>
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -343,8 +357,11 @@ function Dashboard() {
               {lowStock.length === 0 ? "Nothing to reorder — everything is above threshold." : `${lowStock.length} item${lowStock.length === 1 ? "" : "s"} at or below reorder threshold.`}
             </SheetDescription>
           </SheetHeader>
-          <div className="flex-1 overflow-y-auto -mx-6 px-6 py-2">
-            {lowStock.length === 0 ? null : (
+          <div ref={sheetScrollRef} className="flex-1 overflow-y-auto -mx-6 px-6 py-2">
+            <PullToRefresh onRefresh={refreshAll} scrollElement={sheetScrollRef.current} alwaysEnabled>
+            {lowStock.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">Pull down to refresh.</p>
+            ) : (
               <ul className="divide-y">
                 {lowStock
                   .slice()
@@ -370,6 +387,7 @@ function Dashboard() {
                   ))}
               </ul>
             )}
+            </PullToRefresh>
           </div>
           <SheetFooter className="pt-2">
             <SheetClose asChild>
@@ -379,6 +397,7 @@ function Dashboard() {
         </SheetContent>
       </Sheet>
     </div>
+    </PullToRefresh>
   );
 }
 
