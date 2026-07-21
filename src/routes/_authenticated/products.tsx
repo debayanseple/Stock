@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Download, Search, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight } from "lucide-react";
+import { Plus, Pencil, Trash2, Download, Search, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight, Mail, Phone } from "lucide-react";
 import type { Category, Product, Supplier } from "@/lib/inventory-types";
 import { stockStatus, downloadCSV, formatINR } from "@/lib/inventory-types";
 
@@ -52,6 +52,11 @@ function ProductsPage() {
   const globalTxnQtyRef = useRef<HTMLInputElement>(null);
   const [quickTxnOpen, setQuickTxnOpen] = useState(false);
 
+  const [supplierMsgOpen, setSupplierMsgOpen] = useState(false);
+  const [supplierMsgProduct, setSupplierMsgProduct] = useState<Product | null>(null);
+  const [supplierMsgSubject, setSupplierMsgSubject] = useState("");
+  const [supplierMsgBody, setSupplierMsgBody] = useState("");
+
   const products = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
@@ -79,6 +84,28 @@ function ProductsPage() {
 
   const catMap = useMemo(() => new Map((categories.data ?? []).map((c) => [c.id, c.name])), [categories.data]);
   const supMap = useMemo(() => new Map((suppliers.data ?? []).map((s) => [s.id, s.name])), [suppliers.data]);
+  const supRecMap = useMemo(() => new Map((suppliers.data ?? []).map((s) => [s.id, s])), [suppliers.data]);
+
+  const openSupplierMsg = (p: Product) => {
+    const sup = p.supplier_id ? supRecMap.get(p.supplier_id) ?? null : null;
+    const suggestedQty = Math.max((p.reorder_threshold || 0) * 2 - p.quantity, 10);
+    setSupplierMsgProduct(p);
+    setSupplierMsgSubject(`Reorder request: ${p.name} (SKU ${p.sku})`);
+    setSupplierMsgBody(
+      `Hi${sup?.contact_name ? ` ${sup.contact_name}` : sup?.name ? ` ${sup.name}` : ""},\n\n` +
+      `We are running low on "${p.name}" (SKU: ${p.sku}). Current stock is ${p.quantity} ` +
+      `(reorder threshold: ${p.reorder_threshold}).\n\n` +
+      `Please arrange a fresh supply of approximately ${suggestedQty} units at the earliest and share ` +
+      `expected dispatch date and pricing.\n\nThanks,\nStockSathi`
+    );
+    setSupplierMsgOpen(true);
+  };
+
+  const currentSupplier = supplierMsgProduct?.supplier_id ? supRecMap.get(supplierMsgProduct.supplier_id) ?? null : null;
+  const mailtoHref = currentSupplier?.email
+    ? `mailto:${currentSupplier.email}?subject=${encodeURIComponent(supplierMsgSubject)}&body=${encodeURIComponent(supplierMsgBody)}`
+    : "";
+  const telHref = currentSupplier?.phone ? `tel:${currentSupplier.phone.replace(/\s+/g, "")}` : "";
 
   const validateForm = (f: Form): FieldErrors => {
     const e: FieldErrors = {};
@@ -388,6 +415,11 @@ function ProductsPage() {
                   <div><span className="block uppercase tracking-wide text-[10px]">Stock</span><span className="text-foreground">{p.quantity}</span></div>
                 </div>
                 <div className="flex gap-1 justify-end border-t pt-2 -mx-1">
+                  {(s === "low" || s === "out") && (
+                    <Button variant="outline" size="sm" className="mr-auto ml-1 border-warning text-warning hover:bg-warning/10" onClick={() => openSupplierMsg(p)}>
+                      <Mail className="h-4 w-4 mr-1" /> Message supplier
+                    </Button>
+                  )}
                   <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete "${p.name}"?`)) del.mutate(p.id); }}><Trash2 className="h-4 w-4" /></Button>
                 </div>
@@ -431,6 +463,11 @@ function ProductsPage() {
                         : <Badge className="bg-success text-success-foreground hover:bg-success/90">{p.quantity}</Badge>}
                     </TableCell>
                     <TableCell className="text-right">
+                      {(s === "low" || s === "out") && (
+                        <Button variant="outline" size="sm" className="mr-1 border-warning text-warning hover:bg-warning/10" onClick={() => openSupplierMsg(p)}>
+                          <Mail className="h-4 w-4 mr-1" /> Message supplier
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete "${p.name}"?`)) del.mutate(p.id); }}><Trash2 className="h-4 w-4" /></Button>
                     </TableCell>
@@ -518,6 +555,57 @@ function ProductsPage() {
               <span>Stock out</span>
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={supplierMsgOpen} onOpenChange={setSupplierMsgOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Message supplier</DialogTitle>
+          </DialogHeader>
+          {supplierMsgProduct && (
+            <div className="space-y-3">
+              <div className="rounded-md border p-3 text-sm space-y-1 bg-muted/40">
+                <div><span className="text-muted-foreground">Product:</span> <span className="font-medium">{supplierMsgProduct.name}</span> <span className="font-mono text-xs">({supplierMsgProduct.sku})</span></div>
+                <div><span className="text-muted-foreground">Current stock:</span> {supplierMsgProduct.quantity} · <span className="text-muted-foreground">Threshold:</span> {supplierMsgProduct.reorder_threshold}</div>
+                {currentSupplier ? (
+                  <div>
+                    <span className="text-muted-foreground">Supplier:</span> {currentSupplier.name}
+                    {currentSupplier.email && <> · <a className="underline" href={`mailto:${currentSupplier.email}`}>{currentSupplier.email}</a></>}
+                    {currentSupplier.phone && <> · {currentSupplier.phone}</>}
+                  </div>
+                ) : (
+                  <div className="text-destructive">No supplier linked to this product. Assign a supplier to send a message.</div>
+                )}
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="sup-subj">Subject</Label>
+                <Input id="sup-subj" value={supplierMsgSubject} onChange={(e) => setSupplierMsgSubject(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="sup-body">Message</Label>
+                <Textarea id="sup-body" rows={8} value={supplierMsgBody} onChange={(e) => setSupplierMsgBody(e.target.value)} />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setSupplierMsgOpen(false)}>Cancel</Button>
+            <Button
+              variant="outline"
+              asChild={!!telHref}
+              disabled={!telHref}
+              onClick={!telHref ? () => toast.error("No phone number on this supplier") : undefined}
+            >
+              {telHref ? <a href={telHref}><Phone className="h-4 w-4 mr-1" /> Call supplier</a> : <span><Phone className="h-4 w-4 mr-1" /> Call supplier</span>}
+            </Button>
+            <Button
+              asChild={!!mailtoHref}
+              disabled={!mailtoHref}
+              onClick={!mailtoHref ? () => toast.error("No email on this supplier") : () => setSupplierMsgOpen(false)}
+            >
+              {mailtoHref ? <a href={mailtoHref}><Mail className="h-4 w-4 mr-1" /> Send email</a> : <span><Mail className="h-4 w-4 mr-1" /> Send email</span>}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
