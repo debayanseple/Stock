@@ -47,6 +47,11 @@ export function stockStatus(p: Pick<Product, "quantity" | "reorder_threshold">):
   return "ok";
 }
 
+export function formatINR(value: number): string {
+  const n = Number.isFinite(value) ? value : 0;
+  return `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+}
+
 export function downloadCSV(filename: string, rows: Record<string, unknown>[]) {
   if (rows.length === 0) {
     const blob = new Blob([""], { type: "text/csv" });
