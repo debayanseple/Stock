@@ -1,6 +1,6 @@
 {
-  "name": "StockSathi — Inventory & Stock Management",
-  "short_name": "StockSathi",
+  "name": "StockLine — Inventory & Stock Management",
+  "short_name": "StockLine",
   "description": "Manage products, categories, suppliers, and stock movements with a clean inventory portal.",
   "start_url": "/",
   "display": "standalone",
@@ -27,7 +27,7 @@
       "sizes": "1080x1920",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "StockSathi splash screen"
+      "label": "StockLine splash screen"
     }
   ]
 }

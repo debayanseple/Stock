@@ -67,10 +67,10 @@ function LayoutShell() {
             <Link to="/dashboard" className="flex items-center gap-2 px-2 py-2">
               <img
                 src="/logo.png"
-                alt="StockSathi"
+                alt="StockLine"
                 className="h-8 w-8 rounded-md object-contain bg-background"
               />
-              <div className="font-semibold group-data-[collapsible=icon]:hidden">StockSathi</div>
+              <div className="font-semibold group-data-[collapsible=icon]:hidden">StockLine</div>
             </Link>
           </SidebarHeader>
           <SidebarContent>
@@ -106,7 +106,7 @@ function LayoutShell() {
           <header className="h-14 flex items-center gap-2 border-b bg-background px-4 sticky top-0 z-10">
             <SidebarTrigger aria-label="Open navigation menu" />
             <h1 className="font-semibold capitalize truncate">
-              {navItems.find((n) => n.url === pathname)?.title ?? "StockSathi"}
+              {navItems.find((n) => n.url === pathname)?.title ?? "StockLine"}
             </h1>
           </header>
           <main className="flex-1 p-3 sm:p-4 md:p-6">

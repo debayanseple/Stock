@@ -13,9 +13,9 @@ import { downloadCSV } from "@/lib/inventory-types";
 export const Route = createFileRoute("/_authenticated/transactions")({
   head: () => ({
     meta: [
-      { title: "Transactions — StockSathi" },
+      { title: "Transactions — StockLine" },
       { name: "description", content: "Review the full audit log of stock-in and stock-out movements across your inventory." },
-      { property: "og:title", content: "Transactions — StockSathi" },
+      { property: "og:title", content: "Transactions — StockLine" },
       { property: "og:description", content: "Review the full audit log of stock-in and stock-out movements across your inventory." },
       { property: "og:url", content: "/transactions" },
     ],

@@ -12,8 +12,8 @@ export const Route = createFileRoute("/reset-password")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Reset password — StockSathi" },
-      { name: "description", content: "Set a new password for your StockSathi account." },
+      { title: "Reset password — StockLine" },
+      { name: "description", content: "Set a new password for your StockLine account." },
       { name: "robots", content: "noindex" },
     ],
   }),

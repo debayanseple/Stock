@@ -12,10 +12,10 @@ import { Package } from "lucide-react";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — StockSathi" },
-      { name: "description", content: "Sign in to StockSathi to manage products, suppliers, and stock movements." },
-      { property: "og:title", content: "Sign in — StockSathi" },
-      { property: "og:description", content: "Sign in to StockSathi to manage products, suppliers, and stock movements." },
+      { title: "Sign in — StockLine" },
+      { name: "description", content: "Sign in to StockLine to manage products, suppliers, and stock movements." },
+      { property: "og:title", content: "Sign in — StockLine" },
+      { property: "og:description", content: "Sign in to StockLine to manage products, suppliers, and stock movements." },
       { property: "og:url", content: "/auth" },
     ],
     links: [{ rel: "canonical", href: "/auth" }],
@@ -80,7 +80,7 @@ function AuthPage() {
             <Package className="h-6 w-6" />
           </div>
           <h1 className="text-2xl font-semibold leading-none tracking-tight">
-            {showForgot ? "Reset your password" : "Sign in to StockSathi"}
+            {showForgot ? "Reset your password" : "Sign in to StockLine"}
           </h1>
           <CardDescription>
             {showForgot ? "We'll email you a reset link" : "Inventory & stock management portal"}

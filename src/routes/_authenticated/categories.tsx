@@ -16,9 +16,9 @@ import type { Category } from "@/lib/inventory-types";
 export const Route = createFileRoute("/_authenticated/categories")({
   head: () => ({
     meta: [
-      { title: "Categories — StockSathi" },
+      { title: "Categories — StockLine" },
       { name: "description", content: "Organize your inventory by category to keep products grouped and easy to find." },
-      { property: "og:title", content: "Categories — StockSathi" },
+      { property: "og:title", content: "Categories — StockLine" },
       { property: "og:description", content: "Organize your inventory by category to keep products grouped and easy to find." },
       { property: "og:url", content: "/categories" },
     ],
