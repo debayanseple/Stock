@@ -65,9 +65,7 @@ function AuthPage() {
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Package className="h-6 w-6" />
           </div>
-          <CardTitle asChild className="text-2xl">
-            <h1>Sign in to StockSathi</h1>
-          </CardTitle>
+          <h1 className="text-2xl font-semibold leading-none tracking-tight">Sign in to StockSathi</h1>
           <CardDescription>Inventory & stock management portal</CardDescription>
         </CardHeader>
         <CardContent>
