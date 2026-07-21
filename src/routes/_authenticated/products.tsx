@@ -540,28 +540,21 @@ function ProductsPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!txnOpen} onOpenChange={(v) => { if (!v) setTxnOpen(null); }}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <Dialog open={quickTxnOpen} onOpenChange={setQuickTxnOpen}>
+        <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>
-              {txnOpen?.type === "in" ? "Stock in" : "Stock out"} — {txnOpen?.product.name}
-            </DialogTitle>
+            <DialogTitle>Quick transaction</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <div className="text-sm text-muted-foreground">Current stock: {txnOpen?.product.quantity ?? 0}</div>
-            <div className="space-y-1">
-              <Label htmlFor="txn-qty">Quantity *</Label>
-              <Input id="txn-qty" ref={txnQtyRef} type="number" inputMode="numeric" min="1" step="1" value={txnQty}
-                aria-invalid={!!txnError} aria-describedby={txnError ? "txn-qty-err" : undefined}
-                onChange={(e) => { setTxnQty(e.target.value); if (txnError) setTxnError(null); }} />
-              {txnError && <p id="txn-qty-err" className="text-xs text-destructive">{txnError}</p>}
-            </div>
-            <div className="space-y-1"><Label>Notes / reference</Label><Textarea value={txnNotes} onChange={(e) => setTxnNotes(e.target.value)} placeholder="PO number, customer, reason…" /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <Button onClick={() => { setGlobalTxnType("in"); setQuickTxnOpen(false); setGlobalTxnOpen(true); }} variant="outline" className="h-24 flex-col gap-2">
+              <ArrowDownToLine className="h-6 w-6" />
+              <span>Stock in</span>
+            </Button>
+            <Button onClick={() => { setGlobalTxnType("out"); setQuickTxnOpen(false); setGlobalTxnOpen(true); }} variant="outline" className="h-24 flex-col gap-2">
+              <ArrowUpFromLine className="h-6 w-6" />
+              <span>Stock out</span>
+            </Button>
           </div>
-          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setTxnOpen(null)}>Cancel</Button>
-            <Button onClick={() => logTxn.mutate()} disabled={logTxn.isPending}>Record</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
