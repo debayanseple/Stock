@@ -489,3 +489,70 @@ function StockBadge({ product }: { product: Product }) {
   if (s === "low") return <Badge className="bg-warning text-warning-foreground hover:bg-warning/90">Low · {product.quantity}</Badge>;
   return <Badge className="bg-success text-success-foreground hover:bg-success/90">{product.quantity}</Badge>;
 }
+
+function formatRelative(ts: number, now: number): string {
+  const diff = Math.max(0, now - ts);
+  const sec = Math.floor(diff / 1000);
+  if (sec < 10) return "just now";
+  if (sec < 60) return `${sec}s ago`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min} min ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} hr ago`;
+  const day = Math.floor(hr / 24);
+  return `${day}d ago`;
+}
+
+function SyncStatus({
+  isSyncing,
+  hasError,
+  label,
+  title,
+  onRefresh,
+  compact,
+}: {
+  isSyncing: boolean;
+  hasError: boolean;
+  label: string;
+  title?: string;
+  onRefresh: () => void | Promise<void>;
+  compact?: boolean;
+}) {
+  const status = hasError ? "Sync failed" : isSyncing ? "Syncing…" : "Up to date";
+  const dotCls = hasError
+    ? "bg-destructive"
+    : isSyncing
+    ? "bg-warning animate-pulse"
+    : "bg-success";
+  return (
+    <div
+      className={`flex items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 text-xs ${compact ? "" : "sm:text-xs"}`}
+      title={title}
+      aria-live="polite"
+    >
+      <span className={`inline-block h-2 w-2 rounded-full ${dotCls}`} aria-hidden />
+      <span className="text-muted-foreground">
+        <span className="font-medium text-foreground">{status}</span>
+        <span className="hidden sm:inline"> · Last updated {label}</span>
+        <span className="sm:hidden"> · {label}</span>
+      </span>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 shrink-0"
+        onClick={() => onRefresh()}
+        disabled={isSyncing}
+        aria-label="Refresh now"
+      >
+        {hasError ? (
+          <RefreshCw className="h-3.5 w-3.5 text-destructive" />
+        ) : isSyncing ? (
+          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+        )}
+      </Button>
+    </div>
+  );
+}
