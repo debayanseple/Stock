@@ -100,6 +100,9 @@ function LayoutShell() {
               <LogOut className="h-4 w-4" />
               <span className="group-data-[collapsible=icon]:hidden">Sign out</span>
             </Button>
+            <div className="px-2 py-1 text-[10px] text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden">
+              Powered by © ZeroTheorys
+            </div>
           </SidebarFooter>
         </Sidebar>
         <div className="flex-1 flex flex-col min-w-0">
