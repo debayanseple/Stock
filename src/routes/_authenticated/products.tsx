@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Download, Search, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight } from "lucide-react";
 import type { Category, Product, Supplier } from "@/lib/inventory-types";
-import { stockStatus, downloadCSV } from "@/lib/inventory-types";
+import { stockStatus, downloadCSV, formatINR } from "@/lib/inventory-types";
 
 export const Route = createFileRoute("/_authenticated/products")({
   head: () => ({ meta: [{ title: "Products — StockHub" }] }),
