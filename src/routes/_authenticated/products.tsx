@@ -357,6 +357,7 @@ function ProductsPage() {
           </Dialog>
         </div>
       </div>
+      </div>
 
       {/* Mobile card list */}
       <div className="grid gap-3 sm:hidden">
