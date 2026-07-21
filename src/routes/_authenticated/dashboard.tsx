@@ -3,12 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, DollarSign, AlertTriangle, ArrowLeftRight, TrendingUp, TrendingDown, Layers } from "lucide-react";
+import { Package, DollarSign, AlertTriangle } from "lucide-react";
 import type { Category, Product, Transaction } from "@/lib/inventory-types";
 import { stockStatus } from "@/lib/inventory-types";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend, PieChart, Pie, Cell } from "recharts";
 import { format } from "date-fns";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -73,11 +73,6 @@ function Dashboard() {
   const lowStock = items.filter((p) => stockStatus(p) !== "ok");
 
   const rows = window.data ?? [];
-  const totalIn = rows.filter((r) => r.type === "in").reduce((s, r) => s + r.quantity, 0);
-  const totalOut = rows.filter((r) => r.type === "out").reduce((s, r) => s + r.quantity, 0);
-  const outValue = rows
-    .filter((r) => r.type === "out")
-    .reduce((s, r) => s + r.quantity * Number(r.products?.unit_price ?? 0), 0);
 
   const short = (n: string) => (n.length > 14 ? n.slice(0, 14) + "…" : n);
 
@@ -144,13 +139,16 @@ function Dashboard() {
           <h2 className="text-lg font-semibold">Overview</h2>
           <p className="text-xs text-muted-foreground">Insights across your inventory and movements.</p>
         </div>
-        <Tabs value={range} onValueChange={(v) => setRange(v as Range)}>
-          <TabsList className="grid grid-cols-3 w-full sm:w-auto">
-            <TabsTrigger value="7">7d</TabsTrigger>
-            <TabsTrigger value="30">30d</TabsTrigger>
-            <TabsTrigger value="90">90d</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <Select value={range} onValueChange={(v) => setRange(v as Range)}>
+          <SelectTrigger className="w-full sm:w-48">
+            <SelectValue placeholder="Date range" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7">Last 7 days</SelectItem>
+            <SelectItem value="30">Last 30 days</SelectItem>
+            <SelectItem value="90">Last 90 days</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
@@ -161,15 +159,6 @@ function Dashboard() {
           icon={DollarSign}
         />
         <StatCard label="Low / out of stock" value={lowStock.length} icon={AlertTriangle} tone="warn" />
-        <StatCard label={`Movements · ${days}d`} value={rows.length} icon={ArrowLeftRight} />
-        <StatCard label={`Units in · ${days}d`} value={totalIn} icon={TrendingUp} tone="ok" />
-        <StatCard label={`Units out · ${days}d`} value={totalOut} icon={TrendingDown} tone="warn" />
-        <StatCard
-          label={`Out value · ${days}d`}
-          value={`$${outValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
-          icon={DollarSign}
-        />
-        <StatCard label="Categories" value={catData.length} icon={Layers} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
