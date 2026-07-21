@@ -14,7 +14,16 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { Category } from "@/lib/inventory-types";
 
 export const Route = createFileRoute("/_authenticated/categories")({
-  head: () => ({ meta: [{ title: "Categories — StockHub" }] }),
+  head: () => ({
+    meta: [
+      { title: "Categories — StockSathi" },
+      { name: "description", content: "Organize your inventory by category to keep products grouped and easy to find." },
+      { property: "og:title", content: "Categories — StockSathi" },
+      { property: "og:description", content: "Organize your inventory by category to keep products grouped and easy to find." },
+      { property: "og:url", content: "/categories" },
+    ],
+    links: [{ rel: "canonical", href: "/categories" }],
+  }),
   component: CategoriesPage,
 });
 
@@ -108,8 +117,8 @@ function CategoriesPage() {
                   <TableCell className="font-medium">{c.name}</TableCell>
                   <TableCell className="text-muted-foreground">{c.description}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete "${c.name}"?`)) del.mutate(c.id); }}><Trash2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" aria-label={`Edit category ${c.name}`} onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" aria-label={`Delete category ${c.name}`} onClick={() => { if (confirm(`Delete "${c.name}"?`)) del.mutate(c.id); }}><Trash2 className="h-4 w-4" /></Button>
                   </TableCell>
                 </TableRow>
               ))}

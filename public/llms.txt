@@ -1,0 +1,7 @@
+# StockSathi
+
+> Inventory and stock management portal for small businesses — track products, suppliers, and stock movements.
+
+## Pages
+
+- [Sign in](/auth): Sign in or create an account to access the portal.
