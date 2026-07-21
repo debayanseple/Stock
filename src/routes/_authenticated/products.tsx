@@ -278,7 +278,7 @@ function ProductsPage() {
         <div className="flex flex-col sm:flex-row items-end justify-end gap-2 w-full sm:w-auto">
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button variant="outline" size="sm" onClick={() => setQuickTxnOpen(true)} className="shrink-0"><ArrowLeftRight className="h-4 w-4 mr-1" /> Quick transaction</Button>
-            <Dialog open={open} onOpenChange={setOpen} className="flex-1">
+            <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
                 <Button onClick={openNew} className="flex-1 sm:flex-none"><Plus className="h-4 w-4 mr-1" /> New product</Button>
               </DialogTrigger>
