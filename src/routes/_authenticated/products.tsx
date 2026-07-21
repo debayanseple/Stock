@@ -42,11 +42,6 @@ function ProductsPage() {
   const priceRef = useRef<HTMLInputElement>(null);
   const qtyRef = useRef<HTMLInputElement>(null);
   const thresholdRef = useRef<HTMLInputElement>(null);
-  const [txnOpen, setTxnOpen] = useState<{ product: Product; type: "in" | "out" } | null>(null);
-  const [txnQty, setTxnQty] = useState("1");
-  const [txnNotes, setTxnNotes] = useState("");
-  const [txnError, setTxnError] = useState<string | null>(null);
-  const txnQtyRef = useRef<HTMLInputElement>(null);
 
   const [globalTxnOpen, setGlobalTxnOpen] = useState(false);
   const [globalTxnProductId, setGlobalTxnProductId] = useState("");
