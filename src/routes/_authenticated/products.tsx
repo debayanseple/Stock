@@ -425,8 +425,6 @@ function ProductsPage() {
                   <div><span className="block uppercase tracking-wide text-[10px]">Stock</span><span className="text-foreground">{p.quantity}</span></div>
                 </div>
                 <div className="flex gap-1 justify-end border-t pt-2 -mx-1">
-                  <Button variant="ghost" size="icon" title="Stock in" onClick={() => setTxnOpen({ product: p, type: "in" })}><ArrowDownToLine className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" title="Stock out" onClick={() => setTxnOpen({ product: p, type: "out" })}><ArrowUpFromLine className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete "${p.name}"?`)) del.mutate(p.id); }}><Trash2 className="h-4 w-4" /></Button>
                 </div>
