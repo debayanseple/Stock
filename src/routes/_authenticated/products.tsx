@@ -276,11 +276,12 @@ function ProductsPage() {
           </div>
         </div>
         <div className="flex flex-col sm:flex-row items-end justify-end gap-2 w-full sm:w-auto">
-          <div className="flex items-center justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={() => setQuickTxnOpen(true)} className="hidden sm:inline-flex"><ArrowLeftRight className="h-4 w-4 mr-1" /> Quick transaction</Button>
-          </div>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button onClick={openNew} className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-1" /> New product</Button></DialogTrigger>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button variant="outline" size="sm" onClick={() => setQuickTxnOpen(true)} className="shrink-0"><ArrowLeftRight className="h-4 w-4 mr-1" /> Quick transaction</Button>
+            <Dialog open={open} onOpenChange={setOpen} className="flex-1">
+              <DialogTrigger asChild>
+                <Button onClick={openNew} className="flex-1 sm:flex-none"><Plus className="h-4 w-4 mr-1" /> New product</Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>{editing ? "Edit product" : "New product"}</DialogTitle></DialogHeader>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
