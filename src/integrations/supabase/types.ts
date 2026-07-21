@@ -92,6 +92,63 @@ export type Database = {
           },
         ]
       }
+      supplier_messages: {
+        Row: {
+          body: string | null
+          channel: string
+          created_at: string
+          created_by: string | null
+          id: string
+          product_id: string
+          quantity_at_send: number | null
+          recipient: string | null
+          subject: string | null
+          supplier_id: string | null
+          threshold_at_send: number | null
+        }
+        Insert: {
+          body?: string | null
+          channel: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id: string
+          quantity_at_send?: number | null
+          recipient?: string | null
+          subject?: string | null
+          supplier_id?: string | null
+          threshold_at_send?: number | null
+        }
+        Update: {
+          body?: string | null
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          product_id?: string
+          quantity_at_send?: number | null
+          recipient?: string | null
+          subject?: string | null
+          supplier_id?: string | null
+          threshold_at_send?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_messages_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_messages_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           address: string | null

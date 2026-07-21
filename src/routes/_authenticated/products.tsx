@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Download, Search, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight, Mail, Phone } from "lucide-react";
+import { Plus, Pencil, Trash2, Download, Search, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight, Mail, Phone, History } from "lucide-react";
 import type { Category, Product, Supplier } from "@/lib/inventory-types";
 import { stockStatus, downloadCSV, formatINR } from "@/lib/inventory-types";
 
@@ -56,6 +56,34 @@ function ProductsPage() {
   const [supplierMsgProduct, setSupplierMsgProduct] = useState<Product | null>(null);
   const [supplierMsgSubject, setSupplierMsgSubject] = useState("");
   const [supplierMsgBody, setSupplierMsgBody] = useState("");
+  const [confirmChannel, setConfirmChannel] = useState<null | "email" | "call">(null);
+
+  type SupplierMessage = {
+    id: string;
+    product_id: string;
+    supplier_id: string | null;
+    channel: string;
+    recipient: string | null;
+    subject: string | null;
+    body: string | null;
+    quantity_at_send: number | null;
+    threshold_at_send: number | null;
+    created_at: string;
+  };
+
+  const supplierMessages = useQuery({
+    queryKey: ["supplier_messages", supplierMsgProduct?.id],
+    enabled: !!supplierMsgProduct,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("supplier_messages")
+        .select("*")
+        .eq("product_id", supplierMsgProduct!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as SupplierMessage[];
+    },
+  });
 
   const products = useQuery({
     queryKey: ["products"],
@@ -106,6 +134,34 @@ function ProductsPage() {
     ? `mailto:${currentSupplier.email}?subject=${encodeURIComponent(supplierMsgSubject)}&body=${encodeURIComponent(supplierMsgBody)}`
     : "";
   const telHref = currentSupplier?.phone ? `tel:${currentSupplier.phone.replace(/\s+/g, "")}` : "";
+
+  const logSupplierMessage = useMutation({
+    mutationFn: async (channel: "email" | "call") => {
+      if (!supplierMsgProduct) throw new Error("No product selected");
+      const recipient = channel === "email" ? currentSupplier?.email ?? null : currentSupplier?.phone ?? null;
+      const { error } = await supabase.from("supplier_messages").insert({
+        product_id: supplierMsgProduct.id,
+        supplier_id: currentSupplier?.id ?? null,
+        channel,
+        recipient,
+        subject: channel === "email" ? supplierMsgSubject : null,
+        body: channel === "email" ? supplierMsgBody : null,
+        quantity_at_send: supplierMsgProduct.quantity,
+        threshold_at_send: supplierMsgProduct.reorder_threshold,
+      });
+      if (error) throw error;
+      return channel;
+    },
+    onSuccess: (channel) => {
+      qc.invalidateQueries({ queryKey: ["supplier_messages"] });
+      const href = channel === "email" ? mailtoHref : telHref;
+      if (href) window.location.href = href;
+      toast.success(channel === "email" ? "Email opened & logged" : "Call opened & logged");
+      setConfirmChannel(null);
+      setSupplierMsgOpen(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const validateForm = (f: Form): FieldErrors => {
     const e: FieldErrors = {};
@@ -586,24 +642,93 @@ function ProductsPage() {
                 <Label htmlFor="sup-body">Message</Label>
                 <Textarea id="sup-body" rows={8} value={supplierMsgBody} onChange={(e) => setSupplierMsgBody(e.target.value)} />
               </div>
+
+              <div className="pt-2 border-t">
+                <div className="flex items-center gap-2 text-sm font-medium mb-2">
+                  <History className="h-4 w-4 text-muted-foreground" />
+                  Past outreach for this product
+                </div>
+                {supplierMessages.isLoading ? (
+                  <p className="text-xs text-muted-foreground">Loading history…</p>
+                ) : (supplierMessages.data?.length ?? 0) === 0 ? (
+                  <p className="text-xs text-muted-foreground">No previous messages logged.</p>
+                ) : (
+                  <ul className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {supplierMessages.data!.map((m) => (
+                      <li key={m.id} className="text-xs rounded border p-2 bg-muted/30">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1 font-medium">
+                            {m.channel === "email" ? <Mail className="h-3 w-3" /> : <Phone className="h-3 w-3" />}
+                            <span className="capitalize">{m.channel}</span>
+                            {m.recipient && <span className="text-muted-foreground">· {m.recipient}</span>}
+                          </div>
+                          <span className="text-muted-foreground">{new Date(m.created_at).toLocaleString()}</span>
+                        </div>
+                        {m.subject && <div className="mt-1 truncate"><span className="text-muted-foreground">Subject:</span> {m.subject}</div>}
+                        {m.quantity_at_send != null && (
+                          <div className="text-muted-foreground">Stock at send: {m.quantity_at_send} / threshold {m.threshold_at_send ?? "—"}</div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
           )}
           <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
             <Button variant="outline" onClick={() => setSupplierMsgOpen(false)}>Cancel</Button>
             <Button
               variant="outline"
-              asChild={!!telHref}
               disabled={!telHref}
-              onClick={!telHref ? () => toast.error("No phone number on this supplier") : undefined}
+              onClick={() => telHref ? setConfirmChannel("call") : toast.error("No phone number on this supplier")}
             >
-              {telHref ? <a href={telHref}><Phone className="h-4 w-4 mr-1" /> Call supplier</a> : <span><Phone className="h-4 w-4 mr-1" /> Call supplier</span>}
+              <Phone className="h-4 w-4 mr-1" /> Call supplier
             </Button>
             <Button
-              asChild={!!mailtoHref}
               disabled={!mailtoHref}
-              onClick={!mailtoHref ? () => toast.error("No email on this supplier") : () => setSupplierMsgOpen(false)}
+              onClick={() => mailtoHref ? setConfirmChannel("email") : toast.error("No email on this supplier")}
             >
-              {mailtoHref ? <a href={mailtoHref}><Mail className="h-4 w-4 mr-1" /> Send email</a> : <span><Mail className="h-4 w-4 mr-1" /> Send email</span>}
+              <Mail className="h-4 w-4 mr-1" /> Send email
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!confirmChannel} onOpenChange={(o) => { if (!o) setConfirmChannel(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {confirmChannel === "email" ? "Confirm email" : "Confirm call"}
+            </DialogTitle>
+          </DialogHeader>
+          {confirmChannel && currentSupplier && supplierMsgProduct && (
+            <div className="space-y-3 text-sm">
+              <div className="rounded-md border p-3 bg-muted/40 space-y-1">
+                <div><span className="text-muted-foreground">To:</span> <span className="font-medium">{currentSupplier.name}</span>{currentSupplier.contact_name ? ` (${currentSupplier.contact_name})` : ""}</div>
+                <div>
+                  <span className="text-muted-foreground">{confirmChannel === "email" ? "Email:" : "Phone:"}</span>{" "}
+                  <span className="font-mono">{confirmChannel === "email" ? currentSupplier.email : currentSupplier.phone}</span>
+                </div>
+                <div><span className="text-muted-foreground">Product:</span> {supplierMsgProduct.name} ({supplierMsgProduct.sku})</div>
+              </div>
+              {confirmChannel === "email" ? (
+                <>
+                  <div><span className="text-muted-foreground text-xs uppercase tracking-wide">Subject</span><div className="font-medium break-words">{supplierMsgSubject || <span className="text-destructive">Empty subject</span>}</div></div>
+                  <div><span className="text-muted-foreground text-xs uppercase tracking-wide">Message</span><div className="whitespace-pre-wrap text-xs max-h-40 overflow-y-auto rounded border p-2 bg-background">{supplierMsgBody || <span className="text-destructive">Empty message</span>}</div></div>
+                  <p className="text-xs text-muted-foreground">Your mail app will open with this message ready to send.</p>
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground">Your phone app will dial this number. The call will be logged for the record.</p>
+              )}
+            </div>
+          )}
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setConfirmChannel(null)}>Back</Button>
+            <Button
+              onClick={() => confirmChannel && logSupplierMessage.mutate(confirmChannel)}
+              disabled={logSupplierMessage.isPending}
+            >
+              {confirmChannel === "email" ? (<><Mail className="h-4 w-4 mr-1" /> Open email</>) : (<><Phone className="h-4 w-4 mr-1" /> Place call</>)}
             </Button>
           </DialogFooter>
         </DialogContent>
