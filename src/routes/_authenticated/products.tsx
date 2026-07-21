@@ -321,7 +321,7 @@ function ProductsPage() {
       </Card>
 
       <Dialog open={!!txnOpen} onOpenChange={(v) => { if (!v) setTxnOpen(null); }}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {txnOpen?.type === "in" ? "Stock in" : "Stock out"} — {txnOpen?.product.name}
@@ -332,7 +332,7 @@ function ProductsPage() {
             <div className="space-y-1"><Label>Quantity *</Label><Input type="number" min="1" step="1" value={txnQty} onChange={(e) => setTxnQty(e.target.value)} /></div>
             <div className="space-y-1"><Label>Notes / reference</Label><Textarea value={txnNotes} onChange={(e) => setTxnNotes(e.target.value)} placeholder="PO number, customer, reason…" /></div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
             <Button variant="outline" onClick={() => setTxnOpen(null)}>Cancel</Button>
             <Button onClick={() => logTxn.mutate()} disabled={logTxn.isPending}>Record</Button>
           </DialogFooter>

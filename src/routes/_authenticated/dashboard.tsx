@@ -48,7 +48,7 @@ function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total products" value={totalProducts} icon={Package} />
         <StatCard
           label="Total stock value"
@@ -107,12 +107,12 @@ function Dashboard() {
           {txns.data?.length ? (
             <ul className="divide-y">
               {txns.data.map((t) => (
-                <li key={t.id} className="py-2 flex items-center justify-between text-sm">
-                  <div>
+              <li key={t.id} className="py-2 flex items-center justify-between gap-3 text-sm">
+                  <div className="min-w-0">
                     <div className="font-medium">{t.products?.name ?? "Deleted product"}</div>
-                    <div className="text-xs text-muted-foreground">{format(new Date(t.created_at), "PPp")}{t.notes ? ` · ${t.notes}` : ""}</div>
+                    <div className="text-xs text-muted-foreground truncate">{format(new Date(t.created_at), "PPp")}{t.notes ? ` · ${t.notes}` : ""}</div>
                   </div>
-                  <Badge variant={t.type === "in" ? "default" : "secondary"}>
+                  <Badge variant={t.type === "in" ? "default" : "secondary"} className="shrink-0">
                     {t.type === "in" ? "+" : "−"}{t.quantity}
                   </Badge>
                 </li>
