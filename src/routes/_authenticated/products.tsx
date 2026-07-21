@@ -557,6 +557,57 @@ function ProductsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={supplierMsgOpen} onOpenChange={setSupplierMsgOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Message supplier</DialogTitle>
+          </DialogHeader>
+          {supplierMsgProduct && (
+            <div className="space-y-3">
+              <div className="rounded-md border p-3 text-sm space-y-1 bg-muted/40">
+                <div><span className="text-muted-foreground">Product:</span> <span className="font-medium">{supplierMsgProduct.name}</span> <span className="font-mono text-xs">({supplierMsgProduct.sku})</span></div>
+                <div><span className="text-muted-foreground">Current stock:</span> {supplierMsgProduct.quantity} · <span className="text-muted-foreground">Threshold:</span> {supplierMsgProduct.reorder_threshold}</div>
+                {currentSupplier ? (
+                  <div>
+                    <span className="text-muted-foreground">Supplier:</span> {currentSupplier.name}
+                    {currentSupplier.email && <> · <a className="underline" href={`mailto:${currentSupplier.email}`}>{currentSupplier.email}</a></>}
+                    {currentSupplier.phone && <> · {currentSupplier.phone}</>}
+                  </div>
+                ) : (
+                  <div className="text-destructive">No supplier linked to this product. Assign a supplier to send a message.</div>
+                )}
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="sup-subj">Subject</Label>
+                <Input id="sup-subj" value={supplierMsgSubject} onChange={(e) => setSupplierMsgSubject(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="sup-body">Message</Label>
+                <Textarea id="sup-body" rows={8} value={supplierMsgBody} onChange={(e) => setSupplierMsgBody(e.target.value)} />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setSupplierMsgOpen(false)}>Cancel</Button>
+            <Button
+              variant="outline"
+              asChild={!!telHref}
+              disabled={!telHref}
+              onClick={!telHref ? () => toast.error("No phone number on this supplier") : undefined}
+            >
+              {telHref ? <a href={telHref}><Phone className="h-4 w-4 mr-1" /> Call supplier</a> : <span><Phone className="h-4 w-4 mr-1" /> Call supplier</span>}
+            </Button>
+            <Button
+              asChild={!!mailtoHref}
+              disabled={!mailtoHref}
+              onClick={!mailtoHref ? () => toast.error("No email on this supplier") : () => setSupplierMsgOpen(false)}
+            >
+              {mailtoHref ? <a href={mailtoHref}><Mail className="h-4 w-4 mr-1" /> Send email</a> : <span><Mail className="h-4 w-4 mr-1" /> Send email</span>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
