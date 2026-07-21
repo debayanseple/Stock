@@ -415,6 +415,11 @@ function ProductsPage() {
                   <div><span className="block uppercase tracking-wide text-[10px]">Stock</span><span className="text-foreground">{p.quantity}</span></div>
                 </div>
                 <div className="flex gap-1 justify-end border-t pt-2 -mx-1">
+                  {(s === "low" || s === "out") && (
+                    <Button variant="outline" size="sm" className="mr-auto ml-1 border-warning text-warning hover:bg-warning/10" onClick={() => openSupplierMsg(p)}>
+                      <Mail className="h-4 w-4 mr-1" /> Message supplier
+                    </Button>
+                  )}
                   <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete "${p.name}"?`)) del.mutate(p.id); }}><Trash2 className="h-4 w-4" /></Button>
                 </div>
@@ -458,6 +463,11 @@ function ProductsPage() {
                         : <Badge className="bg-success text-success-foreground hover:bg-success/90">{p.quantity}</Badge>}
                     </TableCell>
                     <TableCell className="text-right">
+                      {(s === "low" || s === "out") && (
+                        <Button variant="outline" size="sm" className="mr-1 border-warning text-warning hover:bg-warning/10" onClick={() => openSupplierMsg(p)}>
+                          <Mail className="h-4 w-4 mr-1" /> Message supplier
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete "${p.name}"?`)) del.mutate(p.id); }}><Trash2 className="h-4 w-4" /></Button>
                     </TableCell>
