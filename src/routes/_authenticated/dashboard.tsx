@@ -392,6 +392,16 @@ function Dashboard() {
             <SheetDescription>
               {lowStock.length === 0 ? "Nothing to reorder — everything is above threshold." : `${lowStock.length} item${lowStock.length === 1 ? "" : "s"} at or below reorder threshold.`}
             </SheetDescription>
+            <div className="pt-1">
+              <SyncStatus
+                isSyncing={isSyncing}
+                hasError={hasError}
+                label={lastUpdatedLabel}
+                title={lastUpdatedFull}
+                onRefresh={refreshAll}
+                compact
+              />
+            </div>
           </SheetHeader>
           <div ref={sheetScrollRef} className="flex-1 overflow-y-auto -mx-6 px-6 py-2">
             <PullToRefresh onRefresh={refreshAll} scrollElement={sheetScrollRef.current} alwaysEnabled>
