@@ -313,7 +313,7 @@ function StatCard({ label, value, icon: Icon, tone }: { label: string; value: Re
   const toneCls = tone === "warn"
     ? "bg-destructive/10 text-destructive"
     : tone === "ok"
-    ? "bg-emerald-500/10 text-emerald-600"
+    ? "bg-success/10 text-success"
     : "bg-primary/10 text-primary";
   return (
     <Card>
