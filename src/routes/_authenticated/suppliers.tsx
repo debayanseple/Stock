@@ -129,8 +129,8 @@ function SuppliersPage() {
                   <TableCell>{s.email}</TableCell>
                   <TableCell>{s.phone}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(s)}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete "${s.name}"?`)) del.mutate(s.id); }}><Trash2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" aria-label={`Edit supplier ${s.name}`} onClick={() => openEdit(s)}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" aria-label={`Delete supplier ${s.name}`} onClick={() => { if (confirm(`Delete "${s.name}"?`)) del.mutate(s.id); }}><Trash2 className="h-4 w-4" /></Button>
                   </TableCell>
                 </TableRow>
               ))}
