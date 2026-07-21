@@ -91,7 +91,7 @@ function LayoutShell() {
             </SidebarGroup>
           </SidebarContent>
           <SidebarFooter className="border-t">
-            <div className="px-2 py-2 text-xs text-muted-foreground truncate group-data-[collapsible=icon]:hidden">
+            <div className="px-2 py-2 text-xs text-sidebar-foreground/80 truncate group-data-[collapsible=icon]:hidden">
               {user?.email}
             </div>
             <Button variant="ghost" size="sm" onClick={signOut} className="justify-start">
