@@ -79,90 +79,93 @@ function AuthPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Package className="h-6 w-6" />
-          </div>
-          <h1 className="text-2xl font-semibold leading-none tracking-tight">
-            {showForgot ? "Reset your password" : "Sign in to StockLine"}
-          </h1>
-          <CardDescription>
-            {showForgot ? "We'll email you a reset link" : "Inventory & stock management portal"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {showForgot ? (
-            <form onSubmit={handleForgot} className="space-y-4 mt-2">
-              <div className="space-y-2">
-                <Label htmlFor="fp-email">Email</Label>
-                <Input id="fp-email" type="email" required value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>{loading ? "Sending…" : "Send reset link"}</Button>
-              <Button type="button" variant="ghost" className="w-full" onClick={() => setShowForgot(false)}>
-                Back to sign in
-              </Button>
-            </form>
-          ) : (
-          <Tabs defaultValue="signin">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign in</TabsTrigger>
-              <TabsTrigger value="signup">Sign up</TabsTrigger>
-            </TabsList>
-            <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="space-y-4 mt-4">
+      <div className="w-full max-w-md flex flex-col items-center">
+        <Card className="w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Package className="h-6 w-6" />
+            </div>
+            <h1 className="text-2xl font-semibold leading-none tracking-tight">
+              {showForgot ? "Reset your password" : "Sign in to StockLine"}
+            </h1>
+            <CardDescription>
+              {showForgot ? "We'll email you a reset link" : "Inventory & stock management portal"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {showForgot ? (
+              <form onSubmit={handleForgot} className="space-y-4 mt-2">
                 <div className="space-y-2">
-                  <Label htmlFor="si-email">Email</Label>
-                  <Input id="si-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <Label htmlFor="fp-email">Email</Label>
+                  <Input id="fp-email" type="email" required value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="si-pw">Password</Label>
-                    <button
-                      type="button"
-                      onClick={() => { setResetEmail(email); setShowForgot(true); }}
-                      className="text-xs text-primary hover:underline"
-                    >
-                      Forgot password?
-                    </button>
+                <Button type="submit" className="w-full" disabled={loading}>{loading ? "Sending…" : "Send reset link"}</Button>
+                <Button type="button" variant="ghost" className="w-full" onClick={() => setShowForgot(false)}>
+                  Back to sign in
+                </Button>
+              </form>
+            ) : (
+            <Tabs defaultValue="signin">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="signin">Sign in</TabsTrigger>
+                <TabsTrigger value="signup">Sign up</TabsTrigger>
+              </TabsList>
+              <TabsContent value="signin">
+                <form onSubmit={handleSignIn} className="space-y-4 mt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="si-email">Email</Label>
+                    <Input id="si-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
                   </div>
-                  <Input id="si-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>{loading ? "Signing in…" : "Sign in"}</Button>
-              </form>
-            </TabsContent>
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="su-name">Name</Label>
-                  <Input id="su-name" type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="su-email">Email</Label>
-                  <Input id="su-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="su-pw">Password</Label>
-                  <Input id="su-pw" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>{loading ? "Creating…" : "Create account"}</Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-          )}
-        </CardContent>
-      </Card>
-      <p className="mt-4 text-xs text-muted-foreground">
-        Powered by ©{" "}
-        <a
-          href="https://zerotheorys.lovable.app/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline hover:text-foreground"
-        >
-          ZeroTheorys
-        </a>
-      </p>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="si-pw">Password</Label>
+                      <button
+                        type="button"
+                        onClick={() => { setResetEmail(email); setShowForgot(true); }}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                    <Input id="si-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>{loading ? "Signing in…" : "Sign in"}</Button>
+                </form>
+              </TabsContent>
+              <TabsContent value="signup">
+                <form onSubmit={handleSignUp} className="space-y-4 mt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="su-name">Name</Label>
+                    <Input id="su-name" type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="su-email">Email</Label>
+                    <Input id="su-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="su-pw">Password</Label>
+                    <Input id="su-pw" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>{loading ? "Creating…" : "Create account"}</Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+            )}
+          </CardContent>
+        </Card>
+        <div className="mt-5 px-4 py-2 rounded-full bg-background/80 border border-border shadow-sm text-xs text-muted-foreground flex items-center gap-1.5">
+          <span>Powered by</span>
+          <span className="font-medium text-foreground">©</span>
+          <a
+            href="https://zerotheorys.lovable.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary hover:underline"
+          >
+            ZeroTheorys
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
