@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { Category } from "@/lib/inventory-types";
+import { useProfile } from "@/hooks/use-profile";
 
 export const Route = createFileRoute("/_authenticated/categories")({
   head: () => ({
@@ -29,6 +30,7 @@ export const Route = createFileRoute("/_authenticated/categories")({
 
 function CategoriesPage() {
   const qc = useQueryClient();
+  const { data: profile } = useProfile();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [name, setName] = useState("");
@@ -50,7 +52,8 @@ function CategoriesPage() {
         const { error } = await supabase.from("categories").update({ name: name.trim(), description: description || null }).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("categories").insert({ name: name.trim(), description: description || null });
+        if (!profile?.org_id) throw new Error("No organization assigned");
+        const { error } = await supabase.from("categories").insert({ name: name.trim(), description: description || null, org_id: profile.org_id });
         if (error) throw error;
       }
     },
