@@ -344,28 +344,23 @@ function AdminPageInner() {
                   <TableCell>{statusBadge(p.status)}</TableCell>
                   <TableCell className="text-right">
                     <div className="inline-flex gap-1 justify-end">
-                      {p.status !== "approved" && (
-                        <Button
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => setProfileStatus.mutate({ id: p.id, status: "approved" })}
-                          aria-label="Approve user"
-                          title="Approve"
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {p.status !== "rejected" && (
+                      {p.status === "approved" ? (
                         <Button
                           size="icon"
                           variant="outline"
                           className="h-8 w-8"
-                          onClick={() => setProfileStatus.mutate({ id: p.id, status: "rejected" })}
-                          aria-label="Reject user"
-                          title="Reject"
+                          onClick={() => {
+                            if (window.confirm(`Suspend ${p.full_name ?? p.email ?? "this user"}? They will lose access immediately.`)) {
+                              setProfileStatus.mutate({ id: p.id, status: "rejected" });
+                            }
+                          }}
+                          aria-label="Suspend user"
+                          title="Suspend"
                         >
-                          <X className="h-4 w-4" />
+                          <Ban className="h-4 w-4" />
                         </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </div>
                   </TableCell>
