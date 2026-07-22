@@ -192,15 +192,16 @@ function AdminPageInner() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const [confirm, setConfirm] = useState<{
+  type ConfirmState = {
     open: boolean;
     title: string;
     description: string;
     variant: "default" | "destructive";
     onConfirm: () => void;
-  }>({ open: false, title: "", description: "", variant: "default", onConfirm: () => {} });
+  };
+  const [confirm, setConfirm] = useState<ConfirmState>({ open: false, title: "", description: "", variant: "default", onConfirm: () => {} });
 
-  function askConfirm({ title, description, variant = "default", onConfirm }: Omit<typeof confirm, "open"> & { variant?: "default" | "destructive" }) {
+  function askConfirm({ title, description, variant = "default", onConfirm }: Omit<ConfirmState, "open" | "variant"> & { variant?: "default" | "destructive" }) {
     setConfirm({ open: true, title, description, variant, onConfirm });
   }
 
