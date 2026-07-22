@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Package, Mail } from "lucide-react";
+import { Package, Mail, Eye, EyeOff } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getInviteByToken } from "@/lib/invites.functions";
@@ -34,11 +34,15 @@ function AuthPage() {
   const { invite: inviteToken } = useSearch({ from: "/auth" });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [orgName, setOrgName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
+  const [showSignInPw, setShowSignInPw] = useState(false);
+  const [showSignUpPw, setShowSignUpPw] = useState(false);
+  const [showSignUpConfirmPw, setShowSignUpConfirmPw] = useState(false);
 
   // Look up invite details via a public server function (uses admin client server-side).
   const fetchInvite = useServerFn(getInviteByToken);
@@ -80,6 +84,8 @@ function AuthPage() {
     if (inviteValid && invite && email.toLowerCase().trim() !== invite.email.toLowerCase()) {
       return toast.error(`This invite is for ${invite.email}. Please use that email.`);
     }
+    if (password.length < 6) return toast.error("Password must be at least 6 characters.");
+    if (password !== confirmPassword) return toast.error("Passwords don't match.");
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
@@ -186,6 +192,24 @@ function AuthPage() {
                       </button>
                     </div>
                     <Input id="si-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-11" />
+                    <div className="relative">
+                      <Input
+                        id="si-pw"
+                        type={showSignInPw ? "text" : "password"}
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="h-11 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowSignInPw((v) => !v)}
+                        aria-label={showSignInPw ? "Hide password" : "Show password"}
+                        className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                      >
+                        {showSignInPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
                   <Button type="submit" className="w-full h-11 text-sm font-medium" disabled={loading}>{loading ? "Signing in…" : "Sign in"}</Button>
                 </form>
