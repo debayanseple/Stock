@@ -200,7 +200,7 @@ function AdminPageInner() {
     onConfirm: () => void;
   }>({ open: false, title: "", description: "", variant: "default", onConfirm: () => {} });
 
-  function askConfirm({ title, description, variant = "default", onConfirm }: Omit<typeof confirm, "open">) {
+  function askConfirm({ title, description, variant = "default", onConfirm }: Omit<typeof confirm, "open"> & { variant?: "default" | "destructive" }) {
     setConfirm({ open: true, title, description, variant, onConfirm });
   }
 
