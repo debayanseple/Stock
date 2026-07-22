@@ -16,7 +16,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Package, Tags, Truck, ArrowLeftRight, LogOut, Shield } from "lucide-react";
+import { LayoutDashboard, Package, Tags, Truck, ArrowLeftRight, LogOut, Shield, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -75,6 +75,21 @@ function LayoutShell() {
     staleTime: 60_000,
   });
 
+  const { data: isOrgAdmin } = useQuery({
+    queryKey: ["is_org_admin", user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      return !!data;
+    },
+    staleTime: 60_000,
+  });
+
   const closeOnMobile = () => { if (isMobile) setOpenMobile(false); };
 
   const signOut = async () => {
@@ -112,6 +127,16 @@ function LayoutShell() {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
+                  {(isOrgAdmin || isSuperAdmin) && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild isActive={pathname === "/members"}>
+                        <Link to="/members" onClick={closeOnMobile}>
+                          <Users className="h-4 w-4" />
+                          <span>Team members</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
                   {isSuperAdmin && (
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild isActive={pathname === "/admin"}>
