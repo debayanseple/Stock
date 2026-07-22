@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import {
   Sidebar,
   SidebarContent,
@@ -15,7 +16,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Package, Tags, Truck, ArrowLeftRight, LogOut } from "lucide-react";
+import { LayoutDashboard, Package, Tags, Truck, ArrowLeftRight, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -24,6 +25,14 @@ export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("status")
+      .eq("id", data.user.id)
+      .maybeSingle();
+    if (!profile || profile.status !== "approved") {
+      throw redirect({ to: "/pending" });
+    }
     return { user: data.user };
   },
   component: AuthedLayout,
@@ -50,6 +59,21 @@ function LayoutShell() {
   const navigate = useNavigate();
   const { user } = Route.useRouteContext();
   const { setOpenMobile, isMobile } = useSidebar();
+
+  const { data: isSuperAdmin } = useQuery({
+    queryKey: ["is_super_admin", user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "super_admin")
+        .maybeSingle();
+      return !!data;
+    },
+    staleTime: 60_000,
+  });
 
   const closeOnMobile = () => { if (isMobile) setOpenMobile(false); };
 
@@ -88,6 +112,16 @@ function LayoutShell() {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
+                  {isSuperAdmin && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild isActive={pathname === "/admin"}>
+                        <Link to="/admin" onClick={closeOnMobile}>
+                          <Shield className="h-4 w-4" />
+                          <span>Admin</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
