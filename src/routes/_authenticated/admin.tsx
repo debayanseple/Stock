@@ -192,6 +192,18 @@ function AdminPageInner() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const [confirm, setConfirm] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    variant: "default" | "destructive";
+    onConfirm: () => void;
+  }>({ open: false, title: "", description: "", variant: "default", onConfirm: () => {} });
+
+  function askConfirm({ title, description, variant = "default", onConfirm }: Omit<typeof confirm, "open">) {
+    setConfirm({ open: true, title, description, variant, onConfirm });
+  }
+
   const statusBadge = (s: string) => {
     const variant =
       s === "approved" ? "default" :
