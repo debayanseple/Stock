@@ -55,6 +55,8 @@ export const Route = createFileRoute("/_authenticated/admin")({
 type Org = { id: string; name: string; status: string; created_at: string };
 type Profile = { id: string; email: string | null; full_name: string | null; status: string; org_id: string | null; created_at: string };
 
+const SUPER_ORG_ID = "00000000-0000-0000-0000-000000000001";
+
 function AdminPage() {
   return <AdminPageInner />;
 }
@@ -84,7 +86,11 @@ function AdminPageInner() {
   const orgs = useQuery({
     queryKey: ["admin", "organizations"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("organizations").select("id, name, status, created_at").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("id, name, status, created_at")
+        .neq("id", SUPER_ORG_ID)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Org[];
     },
@@ -93,7 +99,11 @@ function AdminPageInner() {
   const profiles = useQuery({
     queryKey: ["admin", "profiles"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("id, email, full_name, status, org_id, created_at").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, email, full_name, status, org_id, created_at")
+        .neq("org_id", SUPER_ORG_ID)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Profile[];
     },
