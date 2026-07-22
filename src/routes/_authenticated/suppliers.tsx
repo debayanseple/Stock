@@ -78,12 +78,20 @@ function SuppliersPage() {
 
   const save = useMutation({
     mutationFn: async () => {
-      if (!form.name.trim()) throw new Error("Name is required");
+      const eMap = validateForm(form);
+      if (Object.keys(eMap).length) {
+        setErrors(eMap);
+        const order: (keyof FieldErrors)[] = ["name", "phone"];
+        const refs: Record<keyof FieldErrors, React.RefObject<HTMLInputElement | null>> = { name: nameRef, phone: phoneRef };
+        const first = order.find((k) => eMap[k]);
+        if (first) refs[first].current?.focus();
+        throw new Error(eMap[first!] ?? "Please fix the errors");
+      }
       const payload = {
         name: form.name.trim(),
         contact_name: form.contact_name || null,
         email: form.email || null,
-        phone: form.phone || null,
+        phone: form.phone.trim(),
         address: form.address || null,
       };
       if (editing) {
@@ -101,6 +109,7 @@ function SuppliersPage() {
       setOpen(false);
       setEditing(null);
       setForm(empty);
+      setErrors({});
     },
     onError: (e: Error) => toast.error(e.message),
   });
