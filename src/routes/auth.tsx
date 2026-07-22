@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Package, Mail } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getInviteByToken } from "@/lib/invites.functions";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -38,15 +40,13 @@ function AuthPage() {
   const [showForgot, setShowForgot] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
 
-  // Look up invite details (name of org, invited email, role) — bypasses RLS via SECURITY DEFINER fn.
+  // Look up invite details via a public server function (uses admin client server-side).
+  const fetchInvite = useServerFn(getInviteByToken);
   const { data: invite } = useQuery({
     queryKey: ["invite", inviteToken],
     enabled: !!inviteToken,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_invite_by_token", { _token: inviteToken! });
-      if (error) throw error;
-      const row = Array.isArray(data) ? data[0] : data;
-      return row ?? null;
+      return await fetchInvite({ data: { token: inviteToken! } });
     },
     staleTime: 60_000,
   });
