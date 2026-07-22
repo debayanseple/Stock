@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Package } from "lucide-react";
+import { Package, Mail } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    invite: typeof search.invite === "string" ? search.invite : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Sign in — StockLine" },
@@ -25,6 +29,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { invite: inviteToken } = useSearch({ from: "/auth" });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -33,11 +38,30 @@ function AuthPage() {
   const [showForgot, setShowForgot] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
 
+  // Look up invite details (name of org, invited email, role) — bypasses RLS via SECURITY DEFINER fn.
+  const { data: invite } = useQuery({
+    queryKey: ["invite", inviteToken],
+    enabled: !!inviteToken,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_invite_by_token", { _token: inviteToken! });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      return row ?? null;
+    },
+    staleTime: 60_000,
+  });
+
+  const inviteValid = !!invite && !invite.accepted_at && new Date(invite.expires_at) > new Date();
+
+  useEffect(() => {
+    if (invite?.email) setEmail(invite.email);
+  }, [invite?.email]);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard" });
+      if (data.session && !inviteToken) navigate({ to: "/dashboard" });
     });
-  }, [navigate]);
+  }, [navigate, inviteToken]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,19 +76,30 @@ function AuthPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim()) return toast.error("Please enter your name");
-    if (!orgName.trim()) return toast.error("Please enter your organization name");
+    if (!inviteValid && !orgName.trim()) return toast.error("Please enter your organization name");
+    if (inviteValid && invite && email.toLowerCase().trim() !== invite.email.toLowerCase()) {
+      return toast.error(`This invite is for ${invite.email}. Please use that email.`);
+    }
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/pending`,
-        data: { full_name: fullName.trim(), org_name: orgName.trim() },
+        data: {
+          full_name: fullName.trim(),
+          org_name: orgName.trim(),
+          ...(inviteValid ? { invite_token: inviteToken } : {}),
+        },
       },
     });
     setLoading(false);
     if (error) return toast.error(error.message);
-    toast.success("Account created. Awaiting approval by an administrator.");
+    if (inviteValid) {
+      toast.success("Account created. You can sign in now.");
+    } else {
+      toast.success("Account created. Awaiting approval by an administrator.");
+    }
   };
 
   const handleForgot = async (e: React.FormEvent) => {
@@ -82,6 +117,23 @@ function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4 sm:p-6">
       <div className="w-full max-w-[420px] flex flex-col items-center gap-6">
+        {inviteToken && (
+          <Card className="w-full border-primary/40 bg-primary/5">
+            <CardContent className="p-4 flex items-start gap-3">
+              <Mail className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+              <div className="text-sm">
+                {inviteValid && invite ? (
+                  <>
+                    You've been invited to join <strong>{invite.org_name}</strong> as{" "}
+                    <strong>{invite.role === "admin" ? "an admin" : "a staff member"}</strong>. Create your account below to accept.
+                  </>
+                ) : (
+                  <>This invite link is invalid or has expired. Ask the person who invited you to send a new one.</>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
         <Card className="w-full shadow-lg border-border/60">
           <CardHeader className="text-center space-y-5 pt-8 pb-6 px-6 sm:px-8">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md">
@@ -111,7 +163,7 @@ function AuthPage() {
                 </div>
               </form>
             ) : (
-            <Tabs defaultValue="signin" className="space-y-5">
+            <Tabs defaultValue={inviteValid ? "signup" : "signin"} className="space-y-5">
               <TabsList className="grid w-full grid-cols-2 h-11 p-1 bg-muted/60">
                 <TabsTrigger value="signin" className="text-sm font-medium">Sign in</TabsTrigger>
                 <TabsTrigger value="signup" className="text-sm font-medium">Sign up</TabsTrigger>
@@ -144,19 +196,23 @@ function AuthPage() {
                     <Label htmlFor="su-name" className="text-sm font-medium">Name</Label>
                     <Input id="su-name" type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" className="h-11" />
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="su-org" className="text-sm font-medium">Organization</Label>
-                    <Input id="su-org" type="text" required value={orgName} onChange={(e) => setOrgName(e.target.value)} placeholder="Your company or team" className="h-11" />
-                  </div>
+                  {!inviteValid && (
+                    <div className="space-y-1.5">
+                      <Label htmlFor="su-org" className="text-sm font-medium">Organization</Label>
+                      <Input id="su-org" type="text" required value={orgName} onChange={(e) => setOrgName(e.target.value)} placeholder="Your company or team" className="h-11" />
+                    </div>
+                  )}
                   <div className="space-y-1.5">
                     <Label htmlFor="su-email" className="text-sm font-medium">Email</Label>
-                    <Input id="su-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-11" />
+                    <Input id="su-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-11" readOnly={inviteValid} />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="su-pw" className="text-sm font-medium">Password</Label>
                     <Input id="su-pw" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} className="h-11" />
                   </div>
-                  <Button type="submit" className="w-full h-11 text-sm font-medium" disabled={loading}>{loading ? "Creating…" : "Create account"}</Button>
+                  <Button type="submit" className="w-full h-11 text-sm font-medium" disabled={loading || (!!inviteToken && !inviteValid)}>
+                    {loading ? "Creating…" : inviteValid ? "Accept invite & create account" : "Create account"}
+                  </Button>
                 </form>
               </TabsContent>
             </Tabs>
