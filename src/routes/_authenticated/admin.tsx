@@ -106,6 +106,12 @@ function AdminPageInner() {
     };
   }, [orgs.data, profiles.data]);
 
+  const orgNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const o of orgs.data ?? []) m.set(o.id, o.name);
+    return m;
+  }, [orgs.data]);
+
   const signupChart = useMemo(() => {
     const days: { date: string; label: string; orgs: number; users: number }[] = [];
     const today = new Date();
@@ -306,6 +312,7 @@ function AdminPageInner() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Organization</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -315,6 +322,7 @@ function AdminPageInner() {
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">{p.full_name ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{p.email ?? "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{p.org_id ? (orgNameById.get(p.org_id) ?? "—") : "—"}</TableCell>
                   <TableCell>{statusBadge(p.status)}</TableCell>
                   <TableCell className="text-right space-x-2">
                     {p.status !== "approved" && (
