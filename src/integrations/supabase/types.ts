@@ -20,18 +20,62 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          org_id: string
         }
         Insert: {
           created_at?: string
           description?: string | null
           id?: string
           name: string
+          org_id: string
         }
         Update: {
           created_at?: string
           description?: string | null
           id?: string
           name?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -42,6 +86,7 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          org_id: string
           quantity: number
           reorder_threshold: number
           sku: string
@@ -55,6 +100,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
+          org_id: string
           quantity?: number
           reorder_threshold?: number
           sku: string
@@ -68,6 +114,7 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          org_id?: string
           quantity?: number
           reorder_threshold?: number
           sku?: string
@@ -84,10 +131,55 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "products_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "products_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          org_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          org_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          org_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -99,6 +191,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          org_id: string
           product_id: string
           quantity_at_send: number | null
           recipient: string | null
@@ -112,6 +205,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          org_id: string
           product_id: string
           quantity_at_send?: number | null
           recipient?: string | null
@@ -125,6 +219,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          org_id?: string
           product_id?: string
           quantity_at_send?: number | null
           recipient?: string | null
@@ -133,6 +228,13 @@ export type Database = {
           threshold_at_send?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "supplier_messages_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "supplier_messages_product_id_fkey"
             columns: ["product_id"]
@@ -157,6 +259,7 @@ export type Database = {
           email: string | null
           id: string
           name: string
+          org_id: string
           phone: string | null
         }
         Insert: {
@@ -166,6 +269,7 @@ export type Database = {
           email?: string | null
           id?: string
           name: string
+          org_id: string
           phone?: string | null
         }
         Update: {
@@ -175,9 +279,18 @@ export type Database = {
           email?: string | null
           id?: string
           name?: string
+          org_id?: string
           phone?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transactions: {
         Row: {
@@ -185,6 +298,7 @@ export type Database = {
           created_by: string | null
           id: string
           notes: string | null
+          org_id: string
           product_id: string
           quantity: number
           type: Database["public"]["Enums"]["txn_type"]
@@ -194,6 +308,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           notes?: string | null
+          org_id: string
           product_id: string
           quantity: number
           type: Database["public"]["Enums"]["txn_type"]
@@ -203,11 +318,19 @@ export type Database = {
           created_by?: string | null
           id?: string
           notes?: string | null
+          org_id?: string
           product_id?: string
           quantity?: number
           type?: Database["public"]["Enums"]["txn_type"]
         }
         Relationships: [
+          {
+            foreignKeyName: "transactions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "transactions_product_id_fkey"
             columns: ["product_id"]
@@ -243,6 +366,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      current_user_org: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -250,9 +374,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_approved: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "staff"
+      app_role: "admin" | "staff" | "super_admin"
       txn_type: "in" | "out"
     }
     CompositeTypes: {
@@ -381,7 +506,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "staff"],
+      app_role: ["admin", "staff", "super_admin"],
       txn_type: ["in", "out"],
     },
   },
