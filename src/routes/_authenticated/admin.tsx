@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Check, X, Building2, Users, Clock, CheckCircle2, XCircle, TrendingUp, Ban, Play } from "lucide-react";
+import { Check, X, Building2, Users, Clock, CheckCircle2, XCircle, TrendingUp, Ban } from "lucide-react";
 import { useMemo } from "react";
 import {
   ResponsiveContainer,
