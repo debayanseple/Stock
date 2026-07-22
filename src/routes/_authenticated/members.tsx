@@ -5,9 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Check, X, Ban, RefreshCw } from "lucide-react";
+import { Check, X, Ban, RefreshCw, UserPlus, Copy, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 type AppRole = "admin" | "staff" | "super_admin";
 type Status = "pending" | "approved" | "rejected";
@@ -46,6 +50,16 @@ export const Route = createFileRoute("/_authenticated/members")({
   component: MembersPage,
 });
 
+interface InviteRow {
+  id: string;
+  email: string;
+  role: AppRole;
+  token: string;
+  expires_at: string;
+  accepted_at: string | null;
+  created_at: string;
+}
+
 function statusBadge(s: Status) {
   if (s === "approved") return <Badge>Approved</Badge>;
   if (s === "pending") return <Badge variant="secondary">Pending</Badge>;
@@ -54,6 +68,10 @@ function statusBadge(s: Status) {
 
 function MembersPage() {
   const qc = useQueryClient();
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<AppRole>("staff");
+  const [linkForInvite, setLinkForInvite] = useState<string | null>(null);
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ["org_members"],
@@ -94,6 +112,91 @@ function MembersPage() {
     queryFn: async () => (await supabase.auth.getUser()).data.user?.id ?? null,
     staleTime: Infinity,
   });
+
+  const { data: myProfile } = useQuery({
+    queryKey: ["my_profile_org"],
+    queryFn: async () => {
+      const uid = (await supabase.auth.getUser()).data.user?.id;
+      if (!uid) return null;
+      const { data } = await supabase.from("profiles").select("org_id").eq("id", uid).maybeSingle();
+      return data;
+    },
+    staleTime: 60_000,
+  });
+
+  const { data: invites = [] } = useQuery({
+    queryKey: ["org_invites"],
+    queryFn: async (): Promise<InviteRow[]> => {
+      const { data, error } = await supabase
+        .from("org_invites")
+        .select("id, email, role, token, expires_at, accepted_at, created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as InviteRow[];
+    },
+  });
+
+  // Compute current role capacity (excluding super_admin) — matches DB trigger.
+  const nonSuperMembers = members.filter((m) => !m.roles.includes("super_admin") && m.status === "approved");
+  const approvedAdminCount = nonSuperMembers.filter((m) => m.roles.includes("admin")).length;
+  const approvedStaffCount = nonSuperMembers.filter((m) => !m.roles.includes("admin")).length;
+  const pendingAdminInvites = invites.filter((i) => !i.accepted_at && new Date(i.expires_at) > new Date() && i.role === "admin").length;
+  const pendingStaffInvites = invites.filter((i) => !i.accepted_at && new Date(i.expires_at) > new Date() && i.role === "staff").length;
+  const canInviteAdmin = approvedAdminCount + pendingAdminInvites < 1;
+  const canInviteStaff = approvedStaffCount + pendingStaffInvites < 1;
+
+  const createInvite = useMutation({
+    mutationFn: async ({ email, role }: { email: string; role: AppRole }) => {
+      const uid = (await supabase.auth.getUser()).data.user?.id;
+      if (!uid || !myProfile?.org_id) throw new Error("Missing organization context");
+      const { data, error } = await supabase
+        .from("org_invites")
+        .insert({ email: email.toLowerCase().trim(), role, org_id: myProfile.org_id, invited_by: uid })
+        .select("token")
+        .single();
+      if (error) throw error;
+      return data.token as string;
+    },
+    onSuccess: (token) => {
+      const url = `${window.location.origin}/auth?invite=${token}`;
+      setLinkForInvite(url);
+      navigator.clipboard?.writeText(url).catch(() => {});
+      toast.success("Invite created — link copied to clipboard");
+      qc.invalidateQueries({ queryKey: ["org_invites"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const revokeInvite = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("org_invites").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Invite revoked");
+      qc.invalidateQueries({ queryKey: ["org_invites"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const handleInviteSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim()) return toast.error("Enter an email");
+    if (inviteRole === "admin" && !canInviteAdmin) return toast.error("Limit reached: 1 admin per organization.");
+    if (inviteRole === "staff" && !canInviteStaff) return toast.error("Limit reached: 1 staff per organization.");
+    createInvite.mutate({ email: inviteEmail, role: inviteRole });
+    setInviteEmail("");
+  };
+
+  const copyLink = (token: string) => {
+    const url = `${window.location.origin}/auth?invite=${token}`;
+    navigator.clipboard?.writeText(url).then(
+      () => toast.success("Invite link copied"),
+      () => toast.error("Could not copy"),
+    );
+  };
+
+  const pendingInvites = invites.filter((i) => !i.accepted_at && new Date(i.expires_at) > new Date());
 
   const setStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: Status }) => {
@@ -140,11 +243,85 @@ function MembersPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">Approve and manage the people in your organization.</p>
-        <Button variant="outline" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["org_members"] })}>
-          <RefreshCw className="h-4 w-4 mr-1" /> Refresh
-        </Button>
+        <p className="text-sm text-muted-foreground">Invite and manage the people in your organization (max 1 admin + 1 staff).</p>
+        <div className="flex gap-2">
+          <Dialog open={inviteOpen} onOpenChange={(v) => { setInviteOpen(v); if (!v) setLinkForInvite(null); }}>
+            <DialogTrigger asChild>
+              <Button size="sm"><UserPlus className="h-4 w-4 mr-1" /> Invite</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Invite a team member</DialogTitle>
+                <DialogDescription>Share the generated link with them. They'll sign up and join your organization automatically.</DialogDescription>
+              </DialogHeader>
+              {linkForInvite ? (
+                <div className="space-y-3">
+                  <Label className="text-sm">Invite link</Label>
+                  <div className="flex gap-2">
+                    <Input readOnly value={linkForInvite} onFocus={(e) => e.currentTarget.select()} />
+                    <Button type="button" variant="outline" onClick={() => { navigator.clipboard?.writeText(linkForInvite); toast.success("Copied"); }}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Send this link to the invitee. It expires in 7 days.</p>
+                  <DialogFooter>
+                    <Button onClick={() => { setInviteOpen(false); setLinkForInvite(null); }}>Done</Button>
+                  </DialogFooter>
+                </div>
+              ) : (
+                <form onSubmit={handleInviteSubmit} className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="inv-email">Email</Label>
+                    <Input id="inv-email" type="email" required value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="teammate@example.com" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Role</Label>
+                    <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as AppRole)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin" disabled={!canInviteAdmin}>Admin {!canInviteAdmin && "(limit reached)"}</SelectItem>
+                        <SelectItem value="staff" disabled={!canInviteStaff}>Staff {!canInviteStaff && "(limit reached)"}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Admin slots: {approvedAdminCount + pendingAdminInvites}/1 · Staff slots: {approvedStaffCount + pendingStaffInvites}/1
+                  </p>
+                  <DialogFooter>
+                    <Button type="submit" disabled={createInvite.isPending || (!canInviteAdmin && !canInviteStaff)}>
+                      {createInvite.isPending ? "Creating…" : "Create invite link"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              )}
+            </DialogContent>
+          </Dialog>
+          <Button variant="outline" size="sm" onClick={() => { qc.invalidateQueries({ queryKey: ["org_members"] }); qc.invalidateQueries({ queryKey: ["org_invites"] }); }}>
+            <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+          </Button>
+        </div>
       </div>
+
+      {pendingInvites.length > 0 && (
+        <Card>
+          <CardContent className="p-3 space-y-2">
+            <div className="text-sm font-medium">Pending invites</div>
+            <div className="space-y-2">
+              {pendingInvites.map((inv) => (
+                <div key={inv.id} className="flex items-center gap-2 flex-wrap text-sm">
+                  <span className="font-medium truncate max-w-[180px]">{inv.email}</span>
+                  <Badge variant="secondary">{inv.role}</Badge>
+                  <span className="text-xs text-muted-foreground">expires {new Date(inv.expires_at).toLocaleDateString()}</span>
+                  <div className="ml-auto flex gap-1">
+                    <Button size="sm" variant="outline" onClick={() => copyLink(inv.token)}><Copy className="h-4 w-4" /></Button>
+                    <Button size="sm" variant="outline" onClick={() => revokeInvite.mutate(inv.id)}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Mobile cards */}
       <div className="sm:hidden space-y-2">
