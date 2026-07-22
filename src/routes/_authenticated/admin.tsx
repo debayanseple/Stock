@@ -325,7 +325,15 @@ function AdminPageInner() {
                         <Button
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => setOrgStatus.mutate({ id: o.id, status: "approved" })}
+                          onClick={() =>
+                            askConfirm({
+                              title: o.status === "suspended" ? "Reactivate organization" : "Approve organization",
+                              description: o.status === "suspended"
+                                ? `Reactivate "${o.name}"? All members will regain access.`
+                                : `Approve "${o.name}"? This will grant access to all members immediately.`,
+                              onConfirm: () => setOrgStatus.mutate({ id: o.id, status: "approved" }),
+                            })
+                          }
                           aria-label={o.status === "suspended" ? "Reactivate organization" : "Approve organization"}
                           title={o.status === "suspended" ? "Reactivate" : "Approve"}
                         >
@@ -337,11 +345,14 @@ function AdminPageInner() {
                           size="icon"
                           variant="outline"
                           className="h-8 w-8"
-                          onClick={() => {
-                            if (window.confirm(`Suspend "${o.name}"? All members will lose access until reactivated.`)) {
-                              setOrgStatus.mutate({ id: o.id, status: "suspended" });
-                            }
-                          }}
+                          onClick={() =>
+                            askConfirm({
+                              title: "Suspend organization",
+                              description: `Suspend "${o.name}"? All members will lose access until reactivated.`,
+                              variant: "destructive",
+                              onConfirm: () => setOrgStatus.mutate({ id: o.id, status: "suspended" }),
+                            })
+                          }
                           aria-label="Suspend organization"
                           title="Suspend"
                         >
@@ -353,7 +364,14 @@ function AdminPageInner() {
                           size="icon"
                           variant="outline"
                           className="h-8 w-8"
-                          onClick={() => setOrgStatus.mutate({ id: o.id, status: "rejected" })}
+                          onClick={() =>
+                            askConfirm({
+                              title: "Reject organization",
+                              description: `Reject "${o.name}"? This will deny access to all members.`,
+                              variant: "destructive",
+                              onConfirm: () => setOrgStatus.mutate({ id: o.id, status: "rejected" }),
+                            })
+                          }
                           aria-label="Reject organization"
                           title="Reject"
                         >
