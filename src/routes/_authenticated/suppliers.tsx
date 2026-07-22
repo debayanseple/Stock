@@ -139,13 +139,27 @@ function SuppliersPage() {
           <DialogContent>
             <DialogHeader><DialogTitle>{editing ? "Edit supplier" : "New supplier"}</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div className="space-y-1"><Label>Name *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1"><Label>Contact</Label><Input value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} /></div>
-                <div className="space-y-1"><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+              <div className="space-y-1">
+                <Label htmlFor="s-name">Name *</Label>
+                <Input id="s-name" ref={nameRef} value={form.name}
+                  aria-invalid={!!errors.name} aria-describedby={errors.name ? "s-name-err" : undefined}
+                  onChange={(e) => setField("name", e.target.value)}
+                  onBlur={() => setErrors((p) => ({ ...p, name: validateForm(form).name }))} />
+                {errors.name && <p id="s-name-err" className="text-xs text-destructive">{errors.name}</p>}
               </div>
-              <div className="space-y-1"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-              <div className="space-y-1"><Label>Address</Label><Textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1"><Label htmlFor="s-contact">Contact</Label><Input id="s-contact" value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} /></div>
+                <div className="space-y-1">
+                  <Label htmlFor="s-phone">Phone *</Label>
+                  <Input id="s-phone" ref={phoneRef} type="tel" value={form.phone}
+                    aria-invalid={!!errors.phone} aria-describedby={errors.phone ? "s-phone-err" : undefined}
+                    onChange={(e) => setField("phone", e.target.value)}
+                    onBlur={() => setErrors((p) => ({ ...p, phone: validateForm(form).phone }))} />
+                  {errors.phone && <p id="s-phone-err" className="text-xs text-destructive">{errors.phone}</p>}
+                </div>
+              </div>
+              <div className="space-y-1"><Label htmlFor="s-email">Email</Label><Input id="s-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+              <div className="space-y-1"><Label htmlFor="s-address">Address</Label><Textarea id="s-address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
             </div>
             <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
               <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
