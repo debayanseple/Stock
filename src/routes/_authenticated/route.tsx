@@ -22,7 +22,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });
     const { data: profile } = await supabase
@@ -32,6 +32,15 @@ export const Route = createFileRoute("/_authenticated")({
       .maybeSingle();
     if (!profile || profile.status !== "approved") {
       throw redirect({ to: "/pending" });
+    }
+    const { data: superRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.user.id)
+      .eq("role", "super_admin")
+      .maybeSingle();
+    if (superRole && location.pathname !== "/admin") {
+      throw redirect({ to: "/admin" });
     }
     return { user: data.user };
   },
@@ -103,7 +112,7 @@ function LayoutShell() {
       <div className="min-h-screen flex w-full bg-muted/20">
         <Sidebar collapsible="icon">
           <SidebarHeader className="border-b">
-            <Link to="/dashboard" className="flex items-center gap-2 px-2 py-2">
+            <Link to={isSuperAdmin ? "/admin" : "/dashboard"} className="flex items-center gap-2 px-2 py-2">
               <img
                 src="/logo.png"
                 alt="StockLine"
@@ -117,7 +126,7 @@ function LayoutShell() {
               <SidebarGroupLabel>Manage</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {navItems.map((item) => (
+                  {!isSuperAdmin && navItems.map((item) => (
                     <SidebarMenuItem key={item.url}>
                       <SidebarMenuButton asChild isActive={pathname === item.url}>
                         <Link to={item.url} onClick={closeOnMobile}>
@@ -127,7 +136,7 @@ function LayoutShell() {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
-                  {(isOrgAdmin || isSuperAdmin) && (
+                  {isOrgAdmin && !isSuperAdmin && (
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild isActive={pathname === "/members"}>
                         <Link to="/members" onClick={closeOnMobile}>
