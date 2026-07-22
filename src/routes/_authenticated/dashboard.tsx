@@ -69,6 +69,18 @@ function Dashboard() {
   const qc = useQueryClient();
   const sheetScrollRef = useRef<HTMLDivElement>(null);
 
+  // Welcome toast after just being approved (flag set on the /pending screen).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (localStorage.getItem("stockline:justApproved") === "1") {
+      localStorage.removeItem("stockline:justApproved");
+      toast.success("Welcome to StockLine", {
+        description: "Your organization has been approved. You're all set.",
+        icon: <CheckCircle2 className="h-4 w-4" />,
+      });
+    }
+  }, []);
+
   const refreshAll = async () => {
     await Promise.all([
       qc.invalidateQueries({ queryKey: ["products"] }),
