@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProfile } from "@/hooks/use-profile";
-import { Clock, LogOut, RefreshCw } from "lucide-react";
+import { Clock, LogOut, RefreshCw, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/pending")({
@@ -28,9 +28,41 @@ export const Route = createFileRoute("/pending")({
 function PendingPage() {
   const navigate = useNavigate();
   const { data: profile, refetch, isFetching } = useProfile();
+  const prevStatus = useRef<string | undefined>(undefined);
 
+  // Poll every 15s while awaiting approval.
   useEffect(() => {
-    if (profile?.status === "approved") navigate({ to: "/dashboard", replace: true });
+    if (profile?.status !== "pending") return;
+    const t = window.setInterval(() => { refetch(); }, 15_000);
+    return () => window.clearInterval(t);
+  }, [profile?.status, refetch]);
+
+  // Detect status transitions and notify the user.
+  useEffect(() => {
+    const current = profile?.status;
+    const prev = prevStatus.current;
+    if (prev && current && prev !== current) {
+      if (current === "approved") {
+        toast.success("Your account has been approved", {
+          description: "Redirecting you to your dashboard…",
+          icon: <CheckCircle2 className="h-4 w-4" />,
+        });
+        localStorage.setItem("stockline:justApproved", "1");
+        window.setTimeout(() => navigate({ to: "/dashboard", replace: true }), 1200);
+      } else if (current === "rejected") {
+        toast.error("Your account request was declined", {
+          icon: <XCircle className="h-4 w-4" />,
+        });
+      }
+    }
+    prevStatus.current = current;
+  }, [profile?.status, navigate]);
+
+  // Skip pending screen entirely for users already approved on first load.
+  useEffect(() => {
+    if (profile?.status === "approved" && !prevStatus.current) {
+      navigate({ to: "/dashboard", replace: true });
+    }
   }, [profile?.status, navigate]);
 
   const signOut = async () => {
