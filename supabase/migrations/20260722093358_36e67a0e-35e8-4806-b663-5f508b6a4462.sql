@@ -1,0 +1,1 @@
+UPDATE public.profiles SET status='approved' WHERE lower(email)='zerotheorys@gmail.com'; UPDATE public.organizations SET status='approved' WHERE id='00000000-0000-0000-0000-000000000001';
