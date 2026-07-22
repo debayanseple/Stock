@@ -261,10 +261,34 @@ function AdminPageInner() {
                       <div className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString()}</div>
                     </div>
                     <div className="flex gap-1">
-                      <Button size="sm" onClick={() => setOrgStatus.mutate({ id: o.id, status: "approved" })}>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          askConfirm({
+                            title: "Approve organization",
+                            description: `Approve "${o.name}"? This will grant access to all members immediately.`,
+                            onConfirm: () => setOrgStatus.mutate({ id: o.id, status: "approved" }),
+                          })
+                        }
+                        aria-label="Approve organization"
+                        title="Approve"
+                      >
                         <Check className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => setOrgStatus.mutate({ id: o.id, status: "rejected" })}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          askConfirm({
+                            title: "Reject organization",
+                            description: `Reject "${o.name}"? This will deny access to all members.`,
+                            variant: "destructive",
+                            onConfirm: () => setOrgStatus.mutate({ id: o.id, status: "rejected" }),
+                          })
+                        }
+                        aria-label="Reject organization"
+                        title="Reject"
+                      >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
