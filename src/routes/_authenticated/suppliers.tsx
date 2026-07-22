@@ -29,6 +29,7 @@ export const Route = createFileRoute("/_authenticated/suppliers")({
 });
 
 type Form = { name: string; contact_name: string; email: string; phone: string; address: string };
+type FieldErrors = Partial<Record<"name" | "phone", string>>;
 const empty: Form = { name: "", contact_name: "", email: "", phone: "", address: "" };
 
 function SuppliersPage() {
@@ -37,6 +38,34 @@ function SuppliersPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [form, setForm] = useState<Form>(empty);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const nameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+
+  const validateForm = (f: Form): FieldErrors => {
+    const e: FieldErrors = {};
+    if (!f.name.trim()) e.name = "Name is required";
+    if (!f.phone.trim()) e.phone = "Phone is required";
+    return e;
+  };
+
+  const setField = <K extends keyof Form>(k: K, v: Form[K]) => {
+    setForm((prev) => {
+      const next = { ...prev, [k]: v };
+      if (errors[k as keyof FieldErrors]) {
+        const e = validateForm(next);
+        setErrors((prevErr) => ({ ...prevErr, [k]: e[k as keyof FieldErrors] }));
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    if (open) {
+      setErrors({});
+      setTimeout(() => nameRef.current?.focus(), 50);
+    }
+  }, [open]);
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["suppliers"],
