@@ -414,11 +414,14 @@ function AdminPageInner() {
                           size="icon"
                           variant="outline"
                           className="h-8 w-8"
-                          onClick={() => {
-                            if (window.confirm(`Suspend ${p.full_name ?? p.email ?? "this user"}? They will lose access immediately.`)) {
-                              setProfileStatus.mutate({ id: p.id, status: "rejected" });
-                            }
-                          }}
+                          onClick={() =>
+                            askConfirm({
+                              title: "Suspend user",
+                              description: `Suspend ${p.full_name ?? p.email ?? "this user"}? They will lose access immediately.`,
+                              variant: "destructive",
+                              onConfirm: () => setProfileStatus.mutate({ id: p.id, status: "rejected" }),
+                            })
+                          }
                           aria-label="Suspend user"
                           title="Suspend"
                         >
