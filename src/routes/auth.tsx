@@ -191,7 +191,6 @@ function AuthPage() {
                         Forgot password?
                       </button>
                     </div>
-                    <Input id="si-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="h-11" />
                     <div className="relative">
                       <Input
                         id="si-pw"
@@ -232,7 +231,47 @@ function AuthPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="su-pw" className="text-sm font-medium">Password</Label>
-                    <Input id="su-pw" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} className="h-11" />
+                    <div className="relative">
+                      <Input
+                        id="su-pw"
+                        type={showSignUpPw ? "text" : "password"}
+                        required
+                        minLength={6}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="h-11 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowSignUpPw((v) => !v)}
+                        aria-label={showSignUpPw ? "Hide password" : "Show password"}
+                        className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                      >
+                        {showSignUpPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="su-pw2" className="text-sm font-medium">Re-enter password</Label>
+                    <div className="relative">
+                      <Input
+                        id="su-pw2"
+                        type={showSignUpConfirmPw ? "text" : "password"}
+                        required
+                        minLength={6}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="h-11 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowSignUpConfirmPw((v) => !v)}
+                        aria-label={showSignUpConfirmPw ? "Hide password" : "Show password"}
+                        className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                      >
+                        {showSignUpConfirmPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
                   <Button type="submit" className="w-full h-11 text-sm font-medium" disabled={loading || (!!inviteToken && !inviteValid)}>
                     {loading ? "Creating…" : inviteValid ? "Accept invite & create account" : "Create account"}
