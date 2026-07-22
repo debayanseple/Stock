@@ -46,6 +46,29 @@ type Org = { id: string; name: string; status: string; created_at: string };
 type Profile = { id: string; email: string | null; full_name: string | null; status: string; org_id: string | null; created_at: string };
 
 function AdminPage() {
+  return <AdminPageInner />;
+}
+
+function StatCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: React.ReactNode; tone?: "success" | "warning" | "danger" }) {
+  const toneClass =
+    tone === "success" ? "text-[color:var(--success,theme(colors.green.600))]" :
+    tone === "warning" ? "text-amber-600" :
+    tone === "danger" ? "text-destructive" :
+    "text-foreground";
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className={toneClass}>{icon}</span>
+          <span>{label}</span>
+        </div>
+        <div className={`mt-1 text-2xl font-semibold ${toneClass}`}>{value}</div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function AdminPageInner() {
   const qc = useQueryClient();
 
   const orgs = useQuery({
