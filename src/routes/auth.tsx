@@ -28,6 +28,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [orgName, setOrgName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -51,18 +52,19 @@ function AuthPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim()) return toast.error("Please enter your name");
+    if (!orgName.trim()) return toast.error("Please enter your organization name");
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-        data: { full_name: fullName.trim() },
+        emailRedirectTo: `${window.location.origin}/pending`,
+        data: { full_name: fullName.trim(), org_name: orgName.trim() },
       },
     });
     setLoading(false);
     if (error) return toast.error(error.message);
-    toast.success("Account created. You can sign in now.");
+    toast.success("Account created. Awaiting approval by an administrator.");
   };
 
   const handleForgot = async (e: React.FormEvent) => {
@@ -141,6 +143,10 @@ function AuthPage() {
                   <div className="space-y-1.5">
                     <Label htmlFor="su-name" className="text-sm font-medium">Name</Label>
                     <Input id="su-name" type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" className="h-11" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="su-org" className="text-sm font-medium">Organization</Label>
+                    <Input id="su-org" type="text" required value={orgName} onChange={(e) => setOrgName(e.target.value)} placeholder="Your company or team" className="h-11" />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="su-email" className="text-sm font-medium">Email</Label>

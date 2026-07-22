@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Download, Search, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight, Mail, Phone, History } from "lucide-react";
 import type { Category, Product, Supplier } from "@/lib/inventory-types";
 import { stockStatus, downloadCSV, formatINR } from "@/lib/inventory-types";
+import { useProfile } from "@/hooks/use-profile";
 
 export const Route = createFileRoute("/_authenticated/products")({
   head: () => ({
@@ -39,6 +40,7 @@ const emptyForm: Form = { name: "", sku: "", category_id: "", supplier_id: "", u
 
 function ProductsPage() {
   const qc = useQueryClient();
+  const { data: profile } = useProfile();
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -149,6 +151,7 @@ function ProductsPage() {
       if (!supplierMsgProduct) throw new Error("No product selected");
       const recipient = channel === "email" ? currentSupplier?.email ?? null : currentSupplier?.phone ?? null;
       const { error } = await supabase.from("supplier_messages").insert({
+        org_id: profile?.org_id ?? "",
         product_id: supplierMsgProduct.id,
         supplier_id: currentSupplier?.id ?? null,
         channel,
@@ -257,7 +260,8 @@ function ProductsPage() {
           throw error;
         }
       } else {
-        const { error } = await supabase.from("products").insert(payload);
+        if (!profile?.org_id) throw new Error("No organization assigned");
+        const { error } = await supabase.from("products").insert({ ...payload, org_id: profile.org_id });
         if (error) {
           if (error.code === "23505") { setErrors((p) => ({ ...p, sku: "SKU must be unique" })); skuRef.current?.focus(); }
           throw error;
@@ -301,6 +305,7 @@ function ProductsPage() {
         throw new Error("Insufficient stock");
       }
       const { error } = await supabase.from("transactions").insert({
+        org_id: profile?.org_id ?? "",
         product_id: product.id,
         type: globalTxnType,
         quantity: qty,

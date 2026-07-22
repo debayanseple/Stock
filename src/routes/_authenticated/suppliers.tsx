@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { Supplier } from "@/lib/inventory-types";
+import { useProfile } from "@/hooks/use-profile";
 
 export const Route = createFileRoute("/_authenticated/suppliers")({
   head: () => ({
@@ -32,6 +33,7 @@ const empty: Form = { name: "", contact_name: "", email: "", phone: "", address:
 
 function SuppliersPage() {
   const qc = useQueryClient();
+  const { data: profile } = useProfile();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [form, setForm] = useState<Form>(empty);
@@ -59,7 +61,8 @@ function SuppliersPage() {
         const { error } = await supabase.from("suppliers").update(payload).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("suppliers").insert(payload);
+        if (!profile?.org_id) throw new Error("No organization assigned");
+        const { error } = await supabase.from("suppliers").insert({ ...payload, org_id: profile.org_id });
         if (error) throw error;
       }
     },
