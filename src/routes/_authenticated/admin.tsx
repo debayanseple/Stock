@@ -5,9 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Check, X, Building2, Users, Clock, CheckCircle2, XCircle, TrendingUp, Ban } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -182,6 +192,19 @@ function AdminPageInner() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  type ConfirmState = {
+    open: boolean;
+    title: string;
+    description: string;
+    variant: "default" | "destructive";
+    onConfirm: () => void;
+  };
+  const [confirm, setConfirm] = useState<ConfirmState>({ open: false, title: "", description: "", variant: "default", onConfirm: () => {} });
+
+  function askConfirm({ title, description, variant = "default", onConfirm }: Omit<ConfirmState, "open" | "variant"> & { variant?: "default" | "destructive" }) {
+    setConfirm({ open: true, title, description, variant, onConfirm });
+  }
+
   const statusBadge = (s: string) => {
     const variant =
       s === "approved" ? "default" :
@@ -239,10 +262,34 @@ function AdminPageInner() {
                       <div className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString()}</div>
                     </div>
                     <div className="flex gap-1">
-                      <Button size="sm" onClick={() => setOrgStatus.mutate({ id: o.id, status: "approved" })}>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          askConfirm({
+                            title: "Approve organization",
+                            description: `Approve "${o.name}"? This will grant access to all members immediately.`,
+                            onConfirm: () => setOrgStatus.mutate({ id: o.id, status: "approved" }),
+                          })
+                        }
+                        aria-label="Approve organization"
+                        title="Approve"
+                      >
                         <Check className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => setOrgStatus.mutate({ id: o.id, status: "rejected" })}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          askConfirm({
+                            title: "Reject organization",
+                            description: `Reject "${o.name}"? This will deny access to all members.`,
+                            variant: "destructive",
+                            onConfirm: () => setOrgStatus.mutate({ id: o.id, status: "rejected" }),
+                          })
+                        }
+                        aria-label="Reject organization"
+                        title="Reject"
+                      >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
@@ -278,7 +325,15 @@ function AdminPageInner() {
                         <Button
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => setOrgStatus.mutate({ id: o.id, status: "approved" })}
+                          onClick={() =>
+                            askConfirm({
+                              title: o.status === "suspended" ? "Reactivate organization" : "Approve organization",
+                              description: o.status === "suspended"
+                                ? `Reactivate "${o.name}"? All members will regain access.`
+                                : `Approve "${o.name}"? This will grant access to all members immediately.`,
+                              onConfirm: () => setOrgStatus.mutate({ id: o.id, status: "approved" }),
+                            })
+                          }
                           aria-label={o.status === "suspended" ? "Reactivate organization" : "Approve organization"}
                           title={o.status === "suspended" ? "Reactivate" : "Approve"}
                         >
@@ -290,11 +345,14 @@ function AdminPageInner() {
                           size="icon"
                           variant="outline"
                           className="h-8 w-8"
-                          onClick={() => {
-                            if (window.confirm(`Suspend "${o.name}"? All members will lose access until reactivated.`)) {
-                              setOrgStatus.mutate({ id: o.id, status: "suspended" });
-                            }
-                          }}
+                          onClick={() =>
+                            askConfirm({
+                              title: "Suspend organization",
+                              description: `Suspend "${o.name}"? All members will lose access until reactivated.`,
+                              variant: "destructive",
+                              onConfirm: () => setOrgStatus.mutate({ id: o.id, status: "suspended" }),
+                            })
+                          }
                           aria-label="Suspend organization"
                           title="Suspend"
                         >
@@ -306,7 +364,14 @@ function AdminPageInner() {
                           size="icon"
                           variant="outline"
                           className="h-8 w-8"
-                          onClick={() => setOrgStatus.mutate({ id: o.id, status: "rejected" })}
+                          onClick={() =>
+                            askConfirm({
+                              title: "Reject organization",
+                              description: `Reject "${o.name}"? This will deny access to all members.`,
+                              variant: "destructive",
+                              onConfirm: () => setOrgStatus.mutate({ id: o.id, status: "rejected" }),
+                            })
+                          }
                           aria-label="Reject organization"
                           title="Reject"
                         >
@@ -349,11 +414,14 @@ function AdminPageInner() {
                           size="icon"
                           variant="outline"
                           className="h-8 w-8"
-                          onClick={() => {
-                            if (window.confirm(`Suspend ${p.full_name ?? p.email ?? "this user"}? They will lose access immediately.`)) {
-                              setProfileStatus.mutate({ id: p.id, status: "rejected" });
-                            }
-                          }}
+                          onClick={() =>
+                            askConfirm({
+                              title: "Suspend user",
+                              description: `Suspend ${p.full_name ?? p.email ?? "this user"}? They will lose access immediately.`,
+                              variant: "destructive",
+                              onConfirm: () => setProfileStatus.mutate({ id: p.id, status: "rejected" }),
+                            })
+                          }
                           aria-label="Suspend user"
                           title="Suspend"
                         >
@@ -370,6 +438,27 @@ function AdminPageInner() {
           </Table>
         </CardContent>
       </Card>
+
+      <AlertDialog open={confirm.open} onOpenChange={(open) => setConfirm((c) => ({ ...c, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirm.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirm.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirm((c) => ({ ...c, open: false }))}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className={confirm.variant === "destructive" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+              onClick={() => {
+                confirm.onConfirm();
+                setConfirm((c) => ({ ...c, open: false }));
+              }}
+            >
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
