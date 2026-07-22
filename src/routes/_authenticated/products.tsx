@@ -611,36 +611,36 @@ function ProductsPage() {
       </Dialog>
 
       <Dialog open={quickTxnOpen} onOpenChange={setQuickTxnOpen}>
-        <DialogContent className="max-w-sm sm:rounded-2xl p-6">
+        <DialogContent className="max-w-[260px] sm:max-w-[280px] rounded-2xl p-4">
           <DialogHeader className="space-y-1">
-            <DialogTitle className="text-center text-xl font-semibold">Quick transaction</DialogTitle>
-            <p className="text-center text-sm text-muted-foreground">Choose a direction to update stock instantly.</p>
+            <DialogTitle className="text-center text-lg font-semibold">Quick transaction</DialogTitle>
+            <p className="text-center text-xs text-muted-foreground">Choose a direction to update stock.</p>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 pt-2">
+          <div className="grid grid-cols-2 gap-3 pt-1">
             <button
               onClick={() => { setGlobalTxnType("in"); setQuickTxnOpen(false); setGlobalTxnOpen(true); }}
-              className="group relative flex flex-col items-center justify-center gap-3 rounded-2xl border border-success/40 bg-success/10 p-5 transition-all active:scale-95 hover:bg-success/20 hover:border-success/60 focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2"
+              className="group relative flex flex-col items-center justify-center gap-2 rounded-xl border border-success/40 bg-success/10 p-3 transition-all active:scale-95 hover:bg-success/20 hover:border-success/60 focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2"
               aria-label="Record stock in"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success text-success-foreground shadow-sm group-hover:scale-105 transition-transform">
-                <ArrowDownToLine className="h-6 w-6" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success text-success-foreground shadow-sm group-hover:scale-105 transition-transform">
+                <ArrowDownToLine className="h-5 w-5" />
               </div>
               <div className="text-center">
-                <span className="block text-sm font-semibold text-foreground">Stock in</span>
-                <span className="block text-xs text-muted-foreground">Add units</span>
+                <span className="block text-xs font-semibold text-foreground">Stock in</span>
+                <span className="block text-[10px] text-muted-foreground">Add units</span>
               </div>
             </button>
             <button
               onClick={() => { setGlobalTxnType("out"); setQuickTxnOpen(false); setGlobalTxnOpen(true); }}
-              className="group relative flex flex-col items-center justify-center gap-3 rounded-2xl border border-warning/40 bg-warning/10 p-5 transition-all active:scale-95 hover:bg-warning/20 hover:border-warning/60 focus:outline-none focus:ring-2 focus:ring-warning focus:ring-offset-2"
+              className="group relative flex flex-col items-center justify-center gap-2 rounded-xl border border-warning/40 bg-warning/10 p-3 transition-all active:scale-95 hover:bg-warning/20 hover:border-warning/60 focus:outline-none focus:ring-2 focus:ring-warning focus:ring-offset-2"
               aria-label="Record stock out"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-warning text-warning-foreground shadow-sm group-hover:scale-105 transition-transform">
-                <ArrowUpFromLine className="h-6 w-6" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-warning text-warning-foreground shadow-sm group-hover:scale-105 transition-transform">
+                <ArrowUpFromLine className="h-5 w-5" />
               </div>
               <div className="text-center">
-                <span className="block text-sm font-semibold text-foreground">Stock out</span>
-                <span className="block text-xs text-muted-foreground">Remove units</span>
+                <span className="block text-xs font-semibold text-foreground">Stock out</span>
+                <span className="block text-[10px] text-muted-foreground">Remove units</span>
               </div>
             </button>
           </div>
