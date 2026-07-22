@@ -27,18 +27,29 @@ export const Route = createFileRoute("/_authenticated")({
     if (error || !data.user) throw redirect({ to: "/auth" });
     const { data: profile } = await supabase
       .from("profiles")
-      .select("status")
+      .select("status, org_id")
       .eq("id", data.user.id)
       .maybeSingle();
     if (!profile || profile.status !== "approved") {
       throw redirect({ to: "/pending" });
     }
+    // Super admin bypasses org suspension gate below.
     const { data: superRole } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", data.user.id)
       .eq("role", "super_admin")
       .maybeSingle();
+    if (!superRole && profile.org_id) {
+      const { data: org } = await supabase
+        .from("organizations")
+        .select("status")
+        .eq("id", profile.org_id)
+        .maybeSingle();
+      if (!org || org.status === "suspended" || org.status === "rejected") {
+        throw redirect({ to: "/pending" });
+      }
+    }
     if (superRole && location.pathname !== "/admin") {
       throw redirect({ to: "/admin" });
     }
