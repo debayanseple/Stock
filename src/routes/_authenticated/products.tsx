@@ -185,9 +185,9 @@ function ProductsPage() {
       if (dup) e.sku = "SKU must be unique";
     }
     const price = Number(f.unit_price);
-    if (f.unit_price === "" || Number.isNaN(price) || price < 0) e.unit_price = "Enter a price ≥ 0";
+    if (f.unit_price === "" || Number.isNaN(price) || price <= 0) e.unit_price = "Enter a price greater than 0";
     const qty = Number(f.quantity);
-    if (f.quantity === "" || !Number.isInteger(qty) || qty < 0) e.quantity = "Whole number ≥ 0";
+    if (f.quantity === "" || !Number.isInteger(qty) || qty <= 0) e.quantity = "Enter a quantity greater than 0";
     const th = Number(f.reorder_threshold);
     if (f.reorder_threshold === "" || !Number.isInteger(th) || th < 0) e.reorder_threshold = "Whole number ≥ 0";
     return e;
