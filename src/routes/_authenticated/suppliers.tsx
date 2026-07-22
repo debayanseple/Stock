@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +29,7 @@ export const Route = createFileRoute("/_authenticated/suppliers")({
 });
 
 type Form = { name: string; contact_name: string; email: string; phone: string; address: string };
+type FieldErrors = Partial<Record<"name" | "phone", string>>;
 const empty: Form = { name: "", contact_name: "", email: "", phone: "", address: "" };
 
 function SuppliersPage() {
@@ -37,6 +38,34 @@ function SuppliersPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [form, setForm] = useState<Form>(empty);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const nameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+
+  const validateForm = (f: Form): FieldErrors => {
+    const e: FieldErrors = {};
+    if (!f.name.trim()) e.name = "Name is required";
+    if (!f.phone.trim()) e.phone = "Phone is required";
+    return e;
+  };
+
+  const setField = <K extends keyof Form>(k: K, v: Form[K]) => {
+    setForm((prev) => {
+      const next = { ...prev, [k]: v };
+      if (errors[k as keyof FieldErrors]) {
+        const e = validateForm(next);
+        setErrors((prevErr) => ({ ...prevErr, [k]: e[k as keyof FieldErrors] }));
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    if (open) {
+      setErrors({});
+      setTimeout(() => nameRef.current?.focus(), 50);
+    }
+  }, [open]);
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["suppliers"],
@@ -49,12 +78,20 @@ function SuppliersPage() {
 
   const save = useMutation({
     mutationFn: async () => {
-      if (!form.name.trim()) throw new Error("Name is required");
+      const eMap = validateForm(form);
+      if (Object.keys(eMap).length) {
+        setErrors(eMap);
+        const order: (keyof FieldErrors)[] = ["name", "phone"];
+        const refs: Record<keyof FieldErrors, React.RefObject<HTMLInputElement | null>> = { name: nameRef, phone: phoneRef };
+        const first = order.find((k) => eMap[k]);
+        if (first) refs[first].current?.focus();
+        throw new Error(eMap[first!] ?? "Please fix the errors");
+      }
       const payload = {
         name: form.name.trim(),
         contact_name: form.contact_name || null,
         email: form.email || null,
-        phone: form.phone || null,
+        phone: form.phone.trim(),
         address: form.address || null,
       };
       if (editing) {
@@ -72,6 +109,7 @@ function SuppliersPage() {
       setOpen(false);
       setEditing(null);
       setForm(empty);
+      setErrors({});
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -101,13 +139,27 @@ function SuppliersPage() {
           <DialogContent>
             <DialogHeader><DialogTitle>{editing ? "Edit supplier" : "New supplier"}</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div className="space-y-1"><Label>Name *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1"><Label>Contact</Label><Input value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} /></div>
-                <div className="space-y-1"><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+              <div className="space-y-1">
+                <Label htmlFor="s-name">Name *</Label>
+                <Input id="s-name" ref={nameRef} value={form.name}
+                  aria-invalid={!!errors.name} aria-describedby={errors.name ? "s-name-err" : undefined}
+                  onChange={(e) => setField("name", e.target.value)}
+                  onBlur={() => setErrors((p) => ({ ...p, name: validateForm(form).name }))} />
+                {errors.name && <p id="s-name-err" className="text-xs text-destructive">{errors.name}</p>}
               </div>
-              <div className="space-y-1"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-              <div className="space-y-1"><Label>Address</Label><Textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1"><Label htmlFor="s-contact">Contact</Label><Input id="s-contact" value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} /></div>
+                <div className="space-y-1">
+                  <Label htmlFor="s-phone">Phone *</Label>
+                  <Input id="s-phone" ref={phoneRef} type="tel" value={form.phone}
+                    aria-invalid={!!errors.phone} aria-describedby={errors.phone ? "s-phone-err" : undefined}
+                    onChange={(e) => setField("phone", e.target.value)}
+                    onBlur={() => setErrors((p) => ({ ...p, phone: validateForm(form).phone }))} />
+                  {errors.phone && <p id="s-phone-err" className="text-xs text-destructive">{errors.phone}</p>}
+                </div>
+              </div>
+              <div className="space-y-1"><Label htmlFor="s-email">Email</Label><Input id="s-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+              <div className="space-y-1"><Label htmlFor="s-address">Address</Label><Textarea id="s-address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
             </div>
             <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
               <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>

@@ -185,9 +185,9 @@ function ProductsPage() {
       if (dup) e.sku = "SKU must be unique";
     }
     const price = Number(f.unit_price);
-    if (f.unit_price === "" || Number.isNaN(price) || price < 0) e.unit_price = "Enter a price ≥ 0";
+    if (f.unit_price === "" || Number.isNaN(price) || price <= 0) e.unit_price = "Enter a price greater than 0";
     const qty = Number(f.quantity);
-    if (f.quantity === "" || !Number.isInteger(qty) || qty < 0) e.quantity = "Whole number ≥ 0";
+    if (f.quantity === "" || !Number.isInteger(qty) || qty <= 0) e.quantity = "Enter a quantity greater than 0";
     const th = Number(f.reorder_threshold);
     if (f.reorder_threshold === "" || !Number.isInteger(th) || th < 0) e.reorder_threshold = "Whole number ≥ 0";
     return e;
@@ -421,7 +421,7 @@ function ProductsPage() {
                   </Select>
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="p-price">Unit price</Label>
+                  <Label htmlFor="p-price">Unit price *</Label>
                   <Input id="p-price" ref={priceRef} type="number" inputMode="decimal" min="0" step="0.01" value={form.unit_price}
                     aria-invalid={!!errors.unit_price} aria-describedby={errors.unit_price ? "p-price-err" : undefined}
                     onChange={(e) => setField("unit_price", e.target.value)}
@@ -429,7 +429,7 @@ function ProductsPage() {
                   {errors.unit_price && <p id="p-price-err" className="text-xs text-destructive">{errors.unit_price}</p>}
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="p-qty">Quantity {editing && <span className="text-xs text-muted-foreground">(use transactions to change stock)</span>}</Label>
+                  <Label htmlFor="p-qty">Quantity * {editing && <span className="text-xs text-muted-foreground">(use transactions to change stock)</span>}</Label>
                   <Input id="p-qty" ref={qtyRef} type="number" inputMode="numeric" min="0" step="1" value={form.quantity} disabled={!!editing}
                     aria-invalid={!!errors.quantity} aria-describedby={errors.quantity ? "p-qty-err" : undefined}
                     onChange={(e) => setField("quantity", e.target.value)}
