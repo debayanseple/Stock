@@ -58,7 +58,7 @@ function AdminPage() {
 
   const setOrgStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: "approved" | "rejected" }) => {
-      const patch: Record<string, unknown> = { status };
+      const patch: { status: "approved" | "rejected"; approved_at?: string; approved_by?: string | null } = { status };
       if (status === "approved") {
         const { data: userRes } = await supabase.auth.getUser();
         patch.approved_at = new Date().toISOString();
