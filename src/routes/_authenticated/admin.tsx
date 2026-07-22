@@ -272,30 +272,48 @@ function AdminPageInner() {
                   <TableCell className="font-medium">{o.name}</TableCell>
                   <TableCell>{statusBadge(o.status)}</TableCell>
                   <TableCell className="text-muted-foreground">{new Date(o.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-right space-x-2">
-                    {o.status !== "approved" && (
-                      <Button size="sm" onClick={() => setOrgStatus.mutate({ id: o.id, status: "approved" })}>
-                        <Check className="h-4 w-4" /> {o.status === "suspended" ? "Reactivate" : "Approve"}
-                      </Button>
-                    )}
-                    {o.status === "approved" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          if (window.confirm(`Suspend "${o.name}"? All members will lose access until reactivated.`)) {
-                            setOrgStatus.mutate({ id: o.id, status: "suspended" });
-                          }
-                        }}
-                      >
-                        <Ban className="h-4 w-4" /> Suspend
-                      </Button>
-                    )}
-                    {o.status !== "rejected" && (
-                      <Button size="sm" variant="outline" onClick={() => setOrgStatus.mutate({ id: o.id, status: "rejected" })}>
-                        <X className="h-4 w-4" /> Reject
-                      </Button>
-                    )}
+                  <TableCell className="text-right">
+                    <div className="inline-flex gap-1 justify-end">
+                      {o.status !== "approved" && (
+                        <Button
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setOrgStatus.mutate({ id: o.id, status: "approved" })}
+                          aria-label={o.status === "suspended" ? "Reactivate organization" : "Approve organization"}
+                          title={o.status === "suspended" ? "Reactivate" : "Approve"}
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {o.status === "approved" && (
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            if (window.confirm(`Suspend "${o.name}"? All members will lose access until reactivated.`)) {
+                              setOrgStatus.mutate({ id: o.id, status: "suspended" });
+                            }
+                          }}
+                          aria-label="Suspend organization"
+                          title="Suspend"
+                        >
+                          <Ban className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {o.status !== "rejected" && (
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="h-8 w-8"
+                          onClick={() => setOrgStatus.mutate({ id: o.id, status: "rejected" })}
+                          aria-label="Reject organization"
+                          title="Reject"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -324,17 +342,32 @@ function AdminPageInner() {
                   <TableCell className="text-muted-foreground">{p.email ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{p.org_id ? (orgNameById.get(p.org_id) ?? "—") : "—"}</TableCell>
                   <TableCell>{statusBadge(p.status)}</TableCell>
-                  <TableCell className="text-right space-x-2">
-                    {p.status !== "approved" && (
-                      <Button size="sm" onClick={() => setProfileStatus.mutate({ id: p.id, status: "approved" })}>
-                        <Check className="h-4 w-4" /> Approve
-                      </Button>
-                    )}
-                    {p.status !== "rejected" && (
-                      <Button size="sm" variant="outline" onClick={() => setProfileStatus.mutate({ id: p.id, status: "rejected" })}>
-                        <X className="h-4 w-4" /> Reject
-                      </Button>
-                    )}
+                  <TableCell className="text-right">
+                    <div className="inline-flex gap-1 justify-end">
+                      {p.status !== "approved" && (
+                        <Button
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setProfileStatus.mutate({ id: p.id, status: "approved" })}
+                          aria-label="Approve user"
+                          title="Approve"
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {p.status !== "rejected" && (
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="h-8 w-8"
+                          onClick={() => setProfileStatus.mutate({ id: p.id, status: "rejected" })}
+                          aria-label="Reject user"
+                          title="Reject"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
