@@ -1,0 +1,2 @@
+ALTER TABLE public.organizations DROP CONSTRAINT IF EXISTS organizations_status_check;
+ALTER TABLE public.organizations ADD CONSTRAINT organizations_status_check CHECK (status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'suspended'::text]));
