@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Check, X, Building2, Users, Clock, CheckCircle2, XCircle, TrendingUp } from "lucide-react";
+import { Check, X, Building2, Users, Clock, CheckCircle2, XCircle, TrendingUp, Ban, Play } from "lucide-react";
 import { useMemo } from "react";
 import {
   ResponsiveContainer,
@@ -139,8 +139,8 @@ function AdminPageInner() {
   const recentOrgs = (orgs.data ?? []).slice(0, 5);
 
   const setOrgStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: "approved" | "rejected" }) => {
-      const patch: { status: "approved" | "rejected"; approved_at?: string; approved_by?: string | null } = { status };
+    mutationFn: async ({ id, status }: { id: string; status: "approved" | "rejected" | "suspended" }) => {
+      const patch: { status: "approved" | "rejected" | "suspended"; approved_at?: string; approved_by?: string | null } = { status };
       if (status === "approved") {
         const { data: userRes } = await supabase.auth.getUser();
         patch.approved_at = new Date().toISOString();
@@ -148,12 +148,17 @@ function AdminPageInner() {
       }
       const { error } = await supabase.from("organizations").update(patch).eq("id", id);
       if (error) throw error;
-      // cascade approval to profiles in that org
-      const { error: pErr } = await supabase.from("profiles").update({ status }).eq("org_id", id);
+      // cascade status to member profiles so their access reflects org state
+      const profileStatus = status === "suspended" ? "rejected" : status;
+      const { error: pErr } = await supabase.from("profiles").update({ status: profileStatus }).eq("org_id", id);
       if (pErr) throw pErr;
     },
     onSuccess: (_d, v) => {
-      toast.success(v.status === "approved" ? "Organization approved" : "Organization rejected");
+      toast.success(
+        v.status === "approved" ? "Organization approved" :
+        v.status === "suspended" ? "Organization suspended" :
+        "Organization rejected"
+      );
       qc.invalidateQueries({ queryKey: ["admin"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -172,7 +177,10 @@ function AdminPageInner() {
   });
 
   const statusBadge = (s: string) => {
-    const variant = s === "approved" ? "default" : s === "rejected" ? "destructive" : "secondary";
+    const variant =
+      s === "approved" ? "default" :
+      s === "rejected" || s === "suspended" ? "destructive" :
+      "secondary";
     return <Badge variant={variant as "default" | "destructive" | "secondary"}>{s}</Badge>;
   };
 
@@ -261,7 +269,20 @@ function AdminPageInner() {
                   <TableCell className="text-right space-x-2">
                     {o.status !== "approved" && (
                       <Button size="sm" onClick={() => setOrgStatus.mutate({ id: o.id, status: "approved" })}>
-                        <Check className="h-4 w-4" /> Approve
+                        <Check className="h-4 w-4" /> {o.status === "suspended" ? "Reactivate" : "Approve"}
+                      </Button>
+                    )}
+                    {o.status === "approved" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          if (window.confirm(`Suspend "${o.name}"? All members will lose access until reactivated.`)) {
+                            setOrgStatus.mutate({ id: o.id, status: "suspended" });
+                          }
+                        }}
+                      >
+                        <Ban className="h-4 w-4" /> Suspend
                       </Button>
                     )}
                     {o.status !== "rejected" && (
