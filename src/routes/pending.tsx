@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProfile } from "@/hooks/use-profile";
-import { Clock, LogOut, RefreshCw, CheckCircle2, XCircle } from "lucide-react";
+import { Clock, LogOut, RefreshCw, CheckCircle2, XCircle, Ban } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/pending")({
   ssr: false,
@@ -29,6 +30,22 @@ function PendingPage() {
   const navigate = useNavigate();
   const { data: profile, refetch, isFetching } = useProfile();
   const prevStatus = useRef<string | undefined>(undefined);
+  const prevOrgStatus = useRef<string | undefined>(undefined);
+
+  const { data: orgStatus, refetch: refetchOrg } = useQuery({
+    queryKey: ["pending-org-status", profile?.org_id],
+    enabled: !!profile?.org_id,
+    refetchInterval: 15_000,
+    queryFn: async () => {
+      if (!profile?.org_id) return null;
+      const { data } = await supabase
+        .from("organizations")
+        .select("status")
+        .eq("id", profile.org_id)
+        .maybeSingle();
+      return (data?.status as string | undefined) ?? null;
+    },
+  });
 
   // Poll every 15s while awaiting approval.
   useEffect(() => {
@@ -57,6 +74,36 @@ function PendingPage() {
     }
     prevStatus.current = current;
   }, [profile?.status, navigate]);
+
+  // Notify on org status transitions (suspend / reactivate / approve / reject).
+  useEffect(() => {
+    const current = orgStatus ?? undefined;
+    const prev = prevOrgStatus.current;
+    if (prev && current && prev !== current) {
+      if (current === "suspended") {
+        toast.error("Your organization has been suspended", {
+          description: "Access has been paused by the administrator.",
+          icon: <Ban className="h-4 w-4" />,
+        });
+      } else if (current === "approved" && (prev === "suspended" || prev === "pending")) {
+        toast.success(
+          prev === "suspended"
+            ? "Your organization has been reactivated"
+            : "Your organization has been approved",
+          {
+            description: "Redirecting you to your dashboard…",
+            icon: <CheckCircle2 className="h-4 w-4" />,
+          },
+        );
+        window.setTimeout(() => navigate({ to: "/dashboard", replace: true }), 1200);
+      } else if (current === "rejected") {
+        toast.error("Your organization request was declined", {
+          icon: <XCircle className="h-4 w-4" />,
+        });
+      }
+    }
+    prevOrgStatus.current = current;
+  }, [orgStatus, navigate]);
 
   // Skip pending screen entirely for users already approved on first load.
   useEffect(() => {
@@ -93,7 +140,12 @@ function PendingPage() {
         </CardHeader>
         <CardContent className="space-y-3 pb-8">
           {!isRejected && (
-            <Button onClick={() => refetch()} disabled={isFetching} className="w-full" variant="outline">
+            <Button
+              onClick={() => { refetch(); refetchOrg(); }}
+              disabled={isFetching}
+              className="w-full"
+              variant="outline"
+            >
               <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
               Check status
             </Button>

@@ -19,6 +19,7 @@ import {
 import { LayoutDashboard, Package, Tags, Truck, ArrowLeftRight, LogOut, Shield, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useOrgStatusNotifier } from "@/hooks/use-org-status-notifier";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -94,6 +95,24 @@ function LayoutShell() {
     },
     staleTime: 60_000,
   });
+
+  const { data: myOrgId } = useQuery({
+    queryKey: ["my-org-id", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("org_id")
+        .eq("id", user.id)
+        .maybeSingle();
+      return (data?.org_id as string | null) ?? null;
+    },
+    staleTime: 60_000,
+  });
+
+  // Notify non-super-admins when their org status changes (suspended / reactivated).
+  useOrgStatusNotifier(myOrgId ?? null, !isSuperAdmin);
 
   const { data: isOrgAdmin } = useQuery({
     queryKey: ["is_org_admin", user?.id],
