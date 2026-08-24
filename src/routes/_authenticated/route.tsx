@@ -1,4 +1,11 @@
-import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  Link,
+  useNavigate,
+  useRouterState,
+} from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -16,7 +23,17 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Package, Tags, Truck, ArrowLeftRight, LogOut, Shield, Users } from "lucide-react";
+import {
+  LayoutDashboard,
+  Package,
+  Tags,
+  Truck,
+  ArrowLeftRight,
+  LogOut,
+  Shield,
+  Users,
+  Receipt,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useOrgStatusNotifier } from "@/hooks/use-org-status-notifier";
@@ -65,6 +82,7 @@ const navItems = [
   { title: "Categories", url: "/categories", icon: Tags },
   { title: "Suppliers", url: "/suppliers", icon: Truck },
   { title: "Transactions", url: "/transactions", icon: ArrowLeftRight },
+  { title: "Billing", url: "/billing", icon: Receipt },
 ] as const;
 
 function AuthedLayout() {
@@ -129,7 +147,9 @@ function LayoutShell() {
     staleTime: 60_000,
   });
 
-  const closeOnMobile = () => { if (isMobile) setOpenMobile(false); };
+  const closeOnMobile = () => {
+    if (isMobile) setOpenMobile(false);
+  };
 
   const signOut = async () => {
     closeOnMobile();
@@ -139,24 +159,28 @@ function LayoutShell() {
   };
 
   return (
-      <div className="min-h-screen flex w-full bg-muted/20">
-        <Sidebar collapsible="icon">
-          <SidebarHeader className="border-b">
-            <Link to={isSuperAdmin ? "/admin" : "/dashboard"} className="flex items-center gap-2 px-2 py-2">
-              <img
-                src="/logo.png"
-                alt="StockLine"
-                className="h-8 w-8 rounded-md object-contain bg-background"
-              />
-              <div className="font-semibold group-data-[collapsible=icon]:hidden">StockLine</div>
-            </Link>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Manage</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {!isSuperAdmin && navItems.map((item) => (
+    <div className="min-h-screen flex w-full bg-muted/20">
+      <Sidebar collapsible="icon">
+        <SidebarHeader className="border-b">
+          <Link
+            to={isSuperAdmin ? "/admin" : "/dashboard"}
+            className="flex items-center gap-2 px-2 py-2"
+          >
+            <img
+              src="/logo.png"
+              alt="StockLine"
+              className="h-8 w-8 rounded-md object-contain bg-background"
+            />
+            <div className="font-semibold group-data-[collapsible=icon]:hidden">StockLine</div>
+          </Link>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Manage</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {!isSuperAdmin &&
+                  navItems.map((item) => (
                     <SidebarMenuItem key={item.url}>
                       <SidebarMenuButton asChild isActive={pathname === item.url}>
                         <Link to={item.url} onClick={closeOnMobile}>
@@ -166,62 +190,62 @@ function LayoutShell() {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
-                  {isOrgAdmin && !isSuperAdmin && (
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={pathname === "/members"}>
-                        <Link to="/members" onClick={closeOnMobile}>
-                          <Users className="h-4 w-4" />
-                          <span>Team members</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )}
-                  {isSuperAdmin && (
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={pathname === "/admin"}>
-                        <Link to="/admin" onClick={closeOnMobile}>
-                          <Shield className="h-4 w-4" />
-                          <span>Admin</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-          <SidebarFooter className="border-t">
-            <div className="px-2 py-2 text-xs text-sidebar-foreground/80 truncate group-data-[collapsible=icon]:hidden">
-              {(user?.user_metadata as { full_name?: string } | undefined)?.full_name || user?.email}
-            </div>
-            <Button variant="ghost" size="sm" onClick={signOut} className="justify-start">
-              <LogOut className="h-4 w-4" />
-              <span className="group-data-[collapsible=icon]:hidden">Sign out</span>
-            </Button>
-            <div className="px-2 py-1 text-[10px] text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden">
-              Powered by ©{" "}
-              <a
-                href="https://zerotheorys.lovable.app/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-sidebar-foreground"
-              >
-                ZeroTheorys
-              </a>
-            </div>
-          </SidebarFooter>
-        </Sidebar>
-        <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center gap-2 border-b bg-background px-4 sticky top-0 z-10">
-            <SidebarTrigger aria-label="Open navigation menu" />
-            <h1 className="font-semibold capitalize truncate">
-              {navItems.find((n) => n.url === pathname)?.title ?? "StockLine"}
-            </h1>
-          </header>
-          <main className="flex-1 p-3 sm:p-4 md:p-6">
-            <Outlet />
-          </main>
-        </div>
+                {isOrgAdmin && !isSuperAdmin && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname === "/members"}>
+                      <Link to="/members" onClick={closeOnMobile}>
+                        <Users className="h-4 w-4" />
+                        <span>Team members</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+                {isSuperAdmin && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname === "/admin"}>
+                      <Link to="/admin" onClick={closeOnMobile}>
+                        <Shield className="h-4 w-4" />
+                        <span>Admin</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter className="border-t">
+          <div className="px-2 py-2 text-xs text-sidebar-foreground/80 truncate group-data-[collapsible=icon]:hidden">
+            {(user?.user_metadata as { full_name?: string } | undefined)?.full_name || user?.email}
+          </div>
+          <Button variant="ghost" size="sm" onClick={signOut} className="justify-start">
+            <LogOut className="h-4 w-4" />
+            <span className="group-data-[collapsible=icon]:hidden">Sign out</span>
+          </Button>
+          <div className="px-2 py-1 text-[10px] text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden">
+            Powered by ©{" "}
+            <a
+              href="https://zerotheorys.lovable.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-sidebar-foreground"
+            >
+              ZeroTheorys
+            </a>
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="h-14 flex items-center gap-2 border-b bg-background px-4 sticky top-0 z-10">
+          <SidebarTrigger aria-label="Open navigation menu" />
+          <h1 className="font-semibold capitalize truncate">
+            {navItems.find((n) => n.url === pathname)?.title ?? "StockLine"}
+          </h1>
+        </header>
+        <main className="flex-1 p-3 sm:p-4 md:p-6">
+          <Outlet />
+        </main>
       </div>
+    </div>
   );
 }

@@ -17,9 +17,15 @@ export const Route = createFileRoute("/pending")({
   head: () => ({
     meta: [
       { title: "Awaiting approval — StockLine" },
-      { name: "description", content: "Your StockLine account is awaiting approval by an administrator." },
+      {
+        name: "description",
+        content: "Your StockLine account is awaiting approval by an administrator.",
+      },
       { property: "og:title", content: "Awaiting approval — StockLine" },
-      { property: "og:description", content: "Your StockLine account is awaiting approval by an administrator." },
+      {
+        property: "og:description",
+        content: "Your StockLine account is awaiting approval by an administrator.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -50,7 +56,9 @@ function PendingPage() {
   // Poll every 15s while awaiting approval.
   useEffect(() => {
     if (profile?.status !== "pending") return;
-    const t = window.setInterval(() => { refetch(); }, 15_000);
+    const t = window.setInterval(() => {
+      refetch();
+    }, 15_000);
     return () => window.clearInterval(t);
   }, [profile?.status, refetch]);
 
@@ -141,7 +149,10 @@ function PendingPage() {
         <CardContent className="space-y-3 pb-8">
           {!isRejected && (
             <Button
-              onClick={() => { refetch(); refetchOrg(); }}
+              onClick={() => {
+                refetch();
+                refetchOrg();
+              }}
               disabled={isFetching}
               className="w-full"
               variant="outline"

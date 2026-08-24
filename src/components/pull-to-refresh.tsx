@@ -105,7 +105,10 @@ export function PullToRefresh({
         >
           <RefreshCw
             className={`h-5 w-5 ${refreshing ? "animate-spin" : ""}`}
-            style={{ transform: refreshing ? undefined : `rotate(${progress * 270}deg)`, opacity: 0.4 + progress * 0.6 }}
+            style={{
+              transform: refreshing ? undefined : `rotate(${progress * 270}deg)`,
+              opacity: 0.4 + progress * 0.6,
+            }}
           />
         </div>
       )}

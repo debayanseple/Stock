@@ -41,7 +41,9 @@ export type Transaction = {
   created_at: string;
 };
 
-export function stockStatus(p: Pick<Product, "quantity" | "reorder_threshold">): "out" | "low" | "ok" {
+export function stockStatus(
+  p: Pick<Product, "quantity" | "reorder_threshold">,
+): "out" | "low" | "ok" {
   if (p.quantity <= 0) return "out";
   if (p.quantity <= p.reorder_threshold) return "low";
   return "ok";
@@ -64,7 +66,10 @@ export function downloadCSV(filename: string, rows: Record<string, unknown>[]) {
     const s = String(v).replace(/"/g, '""');
     return /[",\n]/.test(s) ? `"${s}"` : s;
   };
-  const csv = [headers.join(","), ...rows.map((r) => headers.map((h) => escape(r[h])).join(","))].join("\n");
+  const csv = [
+    headers.join(","),
+    ...rows.map((r) => headers.map((h) => escape(r[h])).join(",")),
+  ].join("\n");
   triggerDownload(filename, new Blob([csv], { type: "text/csv" }));
 }
 
@@ -76,3 +81,39 @@ function triggerDownload(filename: string, blob: Blob) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+export type PaymentMethod = "cash" | "upi" | "card" | "other";
+export type PaymentStatus = "pending" | "partial" | "paid";
+
+export type BillItem = {
+  id: string;
+  bill_id: string;
+  product_id: string;
+  product_name: string;
+  product_sku: string;
+  unit_price: number;
+  quantity: number;
+  line_total: number;
+  created_at: string;
+};
+
+export type Bill = {
+  id: string;
+  org_id: string;
+  customer_name: string | null;
+  customer_phone: string | null;
+  customer_email: string | null;
+  subtotal: number;
+  tax_amount: number;
+  discount_amount: number;
+  total_amount: number;
+  payment_status: PaymentStatus;
+  payment_method: PaymentMethod | null;
+  paid_amount: number;
+  due_amount: number;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  items?: BillItem[];
+};

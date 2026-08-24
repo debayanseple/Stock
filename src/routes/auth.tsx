@@ -19,9 +19,15 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in — StockLine" },
-      { name: "description", content: "Sign in to StockLine to manage products, suppliers, and stock movements." },
+      {
+        name: "description",
+        content: "Sign in to StockLine to manage products, suppliers, and stock movements.",
+      },
       { property: "og:title", content: "Sign in — StockLine" },
-      { property: "og:description", content: "Sign in to StockLine to manage products, suppliers, and stock movements." },
+      {
+        property: "og:description",
+        content: "Sign in to StockLine to manage products, suppliers, and stock movements.",
+      },
       { property: "og:url", content: "/auth" },
     ],
     links: [{ rel: "canonical", href: "/auth" }],
@@ -131,10 +137,14 @@ function AuthPage() {
                 {inviteValid && invite ? (
                   <>
                     You've been invited to join <strong>{invite.org_name}</strong> as{" "}
-                    <strong>{invite.role === "admin" ? "an admin" : "a staff member"}</strong>. Create your account below to accept.
+                    <strong>{invite.role === "admin" ? "an admin" : "a staff member"}</strong>.
+                    Create your account below to accept.
                   </>
                 ) : (
-                  <>This invite link is invalid or has expired. Ask the person who invited you to send a new one.</>
+                  <>
+                    This invite link is invalid or has expired. Ask the person who invited you to
+                    send a new one.
+                  </>
                 )}
               </div>
             </CardContent>
@@ -150,7 +160,9 @@ function AuthPage() {
                 {showForgot ? "Reset your password" : "Sign in to StockLine"}
               </h1>
               <CardDescription className="text-sm leading-relaxed text-muted-foreground">
-                {showForgot ? "We'll email you a reset link" : "Inventory & stock management portal"}
+                {showForgot
+                  ? "We'll email you a reset link"
+                  : "Inventory & stock management portal"}
               </CardDescription>
             </div>
           </CardHeader>
@@ -158,127 +170,225 @@ function AuthPage() {
             {showForgot ? (
               <form onSubmit={handleForgot} className="space-y-5">
                 <div className="space-y-1.5">
-                  <Label htmlFor="fp-email" className="text-sm font-medium">Email</Label>
-                  <Input id="fp-email" type="email" required value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} className="h-11" />
+                  <Label htmlFor="fp-email" className="text-sm font-medium">
+                    Email
+                  </Label>
+                  <Input
+                    id="fp-email"
+                    type="email"
+                    required
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    className="h-11"
+                  />
                 </div>
                 <div className="space-y-3 pt-1">
-                  <Button type="submit" className="w-full h-11 text-sm font-medium" disabled={loading}>{loading ? "Sending…" : "Send reset link"}</Button>
-                  <Button type="button" variant="ghost" className="w-full h-11 text-sm font-medium" onClick={() => setShowForgot(false)}>
+                  <Button
+                    type="submit"
+                    className="w-full h-11 text-sm font-medium"
+                    disabled={loading}
+                  >
+                    {loading ? "Sending…" : "Send reset link"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full h-11 text-sm font-medium"
+                    onClick={() => setShowForgot(false)}
+                  >
                     Back to sign in
                   </Button>
                 </div>
               </form>
             ) : (
-            <Tabs defaultValue={inviteValid ? "signup" : "signin"} className="space-y-5">
-              <TabsList className="grid w-full grid-cols-2 h-11 p-1 bg-muted/60">
-                <TabsTrigger value="signin" className="text-sm font-medium">Sign in</TabsTrigger>
-                <TabsTrigger value="signup" className="text-sm font-medium">Sign up</TabsTrigger>
-              </TabsList>
-              <TabsContent value="signin" className="mt-0">
-                <form onSubmit={handleSignIn} className="space-y-5">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="si-email" className="text-sm font-medium">Email</Label>
-                    <Input id="si-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-11" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="si-pw" className="text-sm font-medium">Password</Label>
-                      <button
-                        type="button"
-                        onClick={() => { setResetEmail(email); setShowForgot(true); }}
-                        className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-                      >
-                        Forgot password?
-                      </button>
-                    </div>
-                    <div className="relative">
-                      <Input
-                        id="si-pw"
-                        type={showSignInPw ? "text" : "password"}
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="h-11 pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowSignInPw((v) => !v)}
-                        aria-label={showSignInPw ? "Hide password" : "Show password"}
-                        className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
-                      >
-                        {showSignInPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
-                  <Button type="submit" className="w-full h-11 text-sm font-medium" disabled={loading}>{loading ? "Signing in…" : "Sign in"}</Button>
-                </form>
-              </TabsContent>
-              <TabsContent value="signup" className="mt-0">
-                <form onSubmit={handleSignUp} className="space-y-5">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="su-name" className="text-sm font-medium">Name</Label>
-                    <Input id="su-name" type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your name" className="h-11" />
-                  </div>
-                  {!inviteValid && (
+              <Tabs defaultValue={inviteValid ? "signup" : "signin"} className="space-y-5">
+                <TabsList className="grid w-full grid-cols-2 h-11 p-1 bg-muted/60">
+                  <TabsTrigger value="signin" className="text-sm font-medium">
+                    Sign in
+                  </TabsTrigger>
+                  <TabsTrigger value="signup" className="text-sm font-medium">
+                    Sign up
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="signin" className="mt-0">
+                  <form onSubmit={handleSignIn} className="space-y-5">
                     <div className="space-y-1.5">
-                      <Label htmlFor="su-org" className="text-sm font-medium">Organization</Label>
-                      <Input id="su-org" type="text" required value={orgName} onChange={(e) => setOrgName(e.target.value)} placeholder="Your company or team" className="h-11" />
-                    </div>
-                  )}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="su-email" className="text-sm font-medium">Email</Label>
-                    <Input id="su-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-11" readOnly={inviteValid} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="su-pw" className="text-sm font-medium">Password</Label>
-                    <div className="relative">
+                      <Label htmlFor="si-email" className="text-sm font-medium">
+                        Email
+                      </Label>
                       <Input
-                        id="su-pw"
-                        type={showSignUpPw ? "text" : "password"}
+                        id="si-email"
+                        type="email"
                         required
-                        minLength={6}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="h-11 pr-10"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="h-11"
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowSignUpPw((v) => !v)}
-                        aria-label={showSignUpPw ? "Hide password" : "Show password"}
-                        className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
-                      >
-                        {showSignUpPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
                     </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="su-pw2" className="text-sm font-medium">Re-enter password</Label>
-                    <div className="relative">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="si-pw" className="text-sm font-medium">
+                          Password
+                        </Label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setResetEmail(email);
+                            setShowForgot(true);
+                          }}
+                          className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                        >
+                          Forgot password?
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <Input
+                          id="si-pw"
+                          type={showSignInPw ? "text" : "password"}
+                          required
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="h-11 pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowSignInPw((v) => !v)}
+                          aria-label={showSignInPw ? "Hide password" : "Show password"}
+                          className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                        >
+                          {showSignInPw ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full h-11 text-sm font-medium"
+                      disabled={loading}
+                    >
+                      {loading ? "Signing in…" : "Sign in"}
+                    </Button>
+                  </form>
+                </TabsContent>
+                <TabsContent value="signup" className="mt-0">
+                  <form onSubmit={handleSignUp} className="space-y-5">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="su-name" className="text-sm font-medium">
+                        Name
+                      </Label>
                       <Input
-                        id="su-pw2"
-                        type={showSignUpConfirmPw ? "text" : "password"}
+                        id="su-name"
+                        type="text"
                         required
-                        minLength={6}
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="h-11 pr-10"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Your name"
+                        className="h-11"
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowSignUpConfirmPw((v) => !v)}
-                        aria-label={showSignUpConfirmPw ? "Hide password" : "Show password"}
-                        className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
-                      >
-                        {showSignUpConfirmPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
                     </div>
-                  </div>
-                  <Button type="submit" className="w-full h-11 text-sm font-medium" disabled={loading || (!!inviteToken && !inviteValid)}>
-                    {loading ? "Creating…" : inviteValid ? "Accept invite & create account" : "Create account"}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+                    {!inviteValid && (
+                      <div className="space-y-1.5">
+                        <Label htmlFor="su-org" className="text-sm font-medium">
+                          Organization
+                        </Label>
+                        <Input
+                          id="su-org"
+                          type="text"
+                          required
+                          value={orgName}
+                          onChange={(e) => setOrgName(e.target.value)}
+                          placeholder="Your company or team"
+                          className="h-11"
+                        />
+                      </div>
+                    )}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="su-email" className="text-sm font-medium">
+                        Email
+                      </Label>
+                      <Input
+                        id="su-email"
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="h-11"
+                        readOnly={inviteValid}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="su-pw" className="text-sm font-medium">
+                        Password
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="su-pw"
+                          type={showSignUpPw ? "text" : "password"}
+                          required
+                          minLength={6}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="h-11 pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowSignUpPw((v) => !v)}
+                          aria-label={showSignUpPw ? "Hide password" : "Show password"}
+                          className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                        >
+                          {showSignUpPw ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="su-pw2" className="text-sm font-medium">
+                        Re-enter password
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="su-pw2"
+                          type={showSignUpConfirmPw ? "text" : "password"}
+                          required
+                          minLength={6}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="h-11 pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowSignUpConfirmPw((v) => !v)}
+                          aria-label={showSignUpConfirmPw ? "Hide password" : "Show password"}
+                          className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                        >
+                          {showSignUpConfirmPw ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full h-11 text-sm font-medium"
+                      disabled={loading || (!!inviteToken && !inviteValid)}
+                    >
+                      {loading
+                        ? "Creating…"
+                        : inviteValid
+                          ? "Accept invite & create account"
+                          : "Create account"}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
             )}
           </CardContent>
         </Card>

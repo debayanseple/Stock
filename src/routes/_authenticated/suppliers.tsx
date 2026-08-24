@@ -7,8 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { Supplier } from "@/lib/inventory-types";
@@ -18,9 +32,15 @@ export const Route = createFileRoute("/_authenticated/suppliers")({
   head: () => ({
     meta: [
       { title: "Suppliers — StockLine" },
-      { name: "description", content: "Manage suppliers, contact details, and reorder outreach for your inventory." },
+      {
+        name: "description",
+        content: "Manage suppliers, contact details, and reorder outreach for your inventory.",
+      },
       { property: "og:title", content: "Suppliers — StockLine" },
-      { property: "og:description", content: "Manage suppliers, contact details, and reorder outreach for your inventory." },
+      {
+        property: "og:description",
+        content: "Manage suppliers, contact details, and reorder outreach for your inventory.",
+      },
       { property: "og:url", content: "/suppliers" },
     ],
     links: [{ rel: "canonical", href: "/suppliers" }],
@@ -82,7 +102,10 @@ function SuppliersPage() {
       if (Object.keys(eMap).length) {
         setErrors(eMap);
         const order: (keyof FieldErrors)[] = ["name", "phone"];
-        const refs: Record<keyof FieldErrors, React.RefObject<HTMLInputElement | null>> = { name: nameRef, phone: phoneRef };
+        const refs: Record<keyof FieldErrors, React.RefObject<HTMLInputElement | null>> = {
+          name: nameRef,
+          phone: phoneRef,
+        };
         const first = order.find((k) => eMap[k]);
         if (first) refs[first].current?.focus();
         throw new Error(eMap[first!] ?? "Please fix the errors");
@@ -99,7 +122,9 @@ function SuppliersPage() {
         if (error) throw error;
       } else {
         if (!profile?.org_id) throw new Error("No organization assigned");
-        const { error } = await supabase.from("suppliers").insert({ ...payload, org_id: profile.org_id });
+        const { error } = await supabase
+          .from("suppliers")
+          .insert({ ...payload, org_id: profile.org_id });
         if (error) throw error;
       }
     },
@@ -119,51 +144,117 @@ function SuppliersPage() {
       const { error } = await supabase.from("suppliers").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Supplier deleted"); qc.invalidateQueries({ queryKey: ["suppliers"] }); },
+    onSuccess: () => {
+      toast.success("Supplier deleted");
+      qc.invalidateQueries({ queryKey: ["suppliers"] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const openNew = () => { setEditing(null); setForm(empty); setOpen(true); };
+  const openNew = () => {
+    setEditing(null);
+    setForm(empty);
+    setOpen(true);
+  };
   const openEdit = (s: Supplier) => {
     setEditing(s);
-    setForm({ name: s.name, contact_name: s.contact_name ?? "", email: s.email ?? "", phone: s.phone ?? "", address: s.address ?? "" });
+    setForm({
+      name: s.name,
+      contact_name: s.contact_name ?? "",
+      email: s.email ?? "",
+      phone: s.phone ?? "",
+      address: s.address ?? "",
+    });
     setOpen(true);
   };
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
-        <p className="text-sm text-muted-foreground">People and companies you source products from.</p>
+        <p className="text-sm text-muted-foreground">
+          People and companies you source products from.
+        </p>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button onClick={openNew} className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-1" /> New supplier</Button></DialogTrigger>
+          <DialogTrigger asChild>
+            <Button onClick={openNew} className="w-full sm:w-auto">
+              <Plus className="h-4 w-4 mr-1" /> New supplier
+            </Button>
+          </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>{editing ? "Edit supplier" : "New supplier"}</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>{editing ? "Edit supplier" : "New supplier"}</DialogTitle>
+            </DialogHeader>
             <div className="space-y-3">
               <div className="space-y-1">
                 <Label htmlFor="s-name">Name *</Label>
-                <Input id="s-name" ref={nameRef} value={form.name}
-                  aria-invalid={!!errors.name} aria-describedby={errors.name ? "s-name-err" : undefined}
+                <Input
+                  id="s-name"
+                  ref={nameRef}
+                  value={form.name}
+                  aria-invalid={!!errors.name}
+                  aria-describedby={errors.name ? "s-name-err" : undefined}
                   onChange={(e) => setField("name", e.target.value)}
-                  onBlur={() => setErrors((p) => ({ ...p, name: validateForm(form).name }))} />
-                {errors.name && <p id="s-name-err" className="text-xs text-destructive">{errors.name}</p>}
+                  onBlur={() => setErrors((p) => ({ ...p, name: validateForm(form).name }))}
+                />
+                {errors.name && (
+                  <p id="s-name-err" className="text-xs text-destructive">
+                    {errors.name}
+                  </p>
+                )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1"><Label htmlFor="s-contact">Contact</Label><Input id="s-contact" value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} /></div>
+                <div className="space-y-1">
+                  <Label htmlFor="s-contact">Contact</Label>
+                  <Input
+                    id="s-contact"
+                    value={form.contact_name}
+                    onChange={(e) => setForm({ ...form, contact_name: e.target.value })}
+                  />
+                </div>
                 <div className="space-y-1">
                   <Label htmlFor="s-phone">Phone *</Label>
-                  <Input id="s-phone" ref={phoneRef} type="tel" value={form.phone}
-                    aria-invalid={!!errors.phone} aria-describedby={errors.phone ? "s-phone-err" : undefined}
+                  <Input
+                    id="s-phone"
+                    ref={phoneRef}
+                    type="tel"
+                    value={form.phone}
+                    aria-invalid={!!errors.phone}
+                    aria-describedby={errors.phone ? "s-phone-err" : undefined}
                     onChange={(e) => setField("phone", e.target.value)}
-                    onBlur={() => setErrors((p) => ({ ...p, phone: validateForm(form).phone }))} />
-                  {errors.phone && <p id="s-phone-err" className="text-xs text-destructive">{errors.phone}</p>}
+                    onBlur={() => setErrors((p) => ({ ...p, phone: validateForm(form).phone }))}
+                  />
+                  {errors.phone && (
+                    <p id="s-phone-err" className="text-xs text-destructive">
+                      {errors.phone}
+                    </p>
+                  )}
                 </div>
               </div>
-              <div className="space-y-1"><Label htmlFor="s-email">Email</Label><Input id="s-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-              <div className="space-y-1"><Label htmlFor="s-address">Address</Label><Textarea id="s-address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+              <div className="space-y-1">
+                <Label htmlFor="s-email">Email</Label>
+                <Input
+                  id="s-email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="s-address">Address</Label>
+                <Textarea
+                  id="s-address"
+                  value={form.address}
+                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                />
+              </div>
             </div>
             <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
-              <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button onClick={() => save.mutate()} disabled={save.isPending}>Save</Button>
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => save.mutate()} disabled={save.isPending}>
+                Save
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -171,24 +262,58 @@ function SuppliersPage() {
       <Card>
         <CardContent className="p-0 overflow-x-auto">
           <Table>
-            <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Contact</TableHead><TableHead>Email</TableHead><TableHead>Phone</TableHead><TableHead className="w-32 text-right">Actions</TableHead></TableRow></TableHeader>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead className="w-32 text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Loading…</TableCell></TableRow>
-              ) : data.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">No suppliers yet.</TableCell></TableRow>
-              ) : data.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell className="font-medium">{s.name}</TableCell>
-                  <TableCell>{s.contact_name}</TableCell>
-                  <TableCell>{s.email}</TableCell>
-                  <TableCell>{s.phone}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" aria-label={`Edit supplier ${s.name}`} onClick={() => openEdit(s)}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" aria-label={`Delete supplier ${s.name}`} onClick={() => { if (confirm(`Delete "${s.name}"?`)) del.mutate(s.id); }}><Trash2 className="h-4 w-4" /></Button>
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    Loading…
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : data.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    No suppliers yet.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                data.map((s) => (
+                  <TableRow key={s.id}>
+                    <TableCell className="font-medium">{s.name}</TableCell>
+                    <TableCell>{s.contact_name}</TableCell>
+                    <TableCell>{s.email}</TableCell>
+                    <TableCell>{s.phone}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Edit supplier ${s.name}`}
+                        onClick={() => openEdit(s)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Delete supplier ${s.name}`}
+                        onClick={() => {
+                          if (confirm(`Delete "${s.name}"?`)) del.mutate(s.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

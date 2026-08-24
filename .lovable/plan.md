@@ -1,5 +1,5 @@
-
 ## Goal
+
 Convert StockLine into a multi-tenant SaaS. Each customer is an **organization** with isolated inventory data. New signups (user + org) are held in a **pending** state until the **super admin** (`zerotheorys@gmail.com`) approves them from an admin portal.
 
 ## Database changes (single migration)
@@ -31,6 +31,7 @@ Convert StockLine into a multi-tenant SaaS. Each customer is an **organization**
 ## Super admin portal
 
 New route `/admin` (under `_authenticated`, gated by `super_admin` role):
+
 - **Pending approvals**: list of orgs with pending status, each showing org name + owner email/name. Approve / Reject buttons.
 - **All organizations**: list with status, member count, created date. Actions: suspend/reactivate.
 - Uses server functions with `requireSupabaseAuth` + super_admin check.
@@ -48,6 +49,7 @@ All existing CRUD in `products.tsx`, `categories.tsx`, `suppliers.tsx`, `transac
 ## Notifications (light-touch)
 
 For the "email super admin on new signup" part of the answer, I'll defer full email templating and instead:
+
 - Show a toast + red dot on the Admin nav when pending approvals exist (polled every 60s).
 - Note in the plan: full email notification can be added later via Lovable Emails (requires domain setup).
 
@@ -59,6 +61,7 @@ For the "email super admin on new signup" part of the answer, I'll defer full em
 - `types.ts` regenerates after migration approval.
 
 ## Out of scope
+
 - Email notifications to super admin on new signup (mentioned but deferred).
 - Org-level user invitation / team management inside a customer org.
 - Billing / plans.

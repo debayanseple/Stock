@@ -2,13 +2,34 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Check, X, Ban, RefreshCw, UserPlus, Copy, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -29,9 +50,15 @@ export const Route = createFileRoute("/_authenticated/members")({
   head: () => ({
     meta: [
       { title: "Team members — StockLine" },
-      { name: "description", content: "Approve, remove, and change roles for members of your organization." },
+      {
+        name: "description",
+        content: "Approve, remove, and change roles for members of your organization.",
+      },
       { property: "og:title", content: "Team members — StockLine" },
-      { property: "og:description", content: "Approve, remove, and change roles for members of your organization." },
+      {
+        property: "og:description",
+        content: "Approve, remove, and change roles for members of your organization.",
+      },
       { property: "og:url", content: "/members" },
     ],
     links: [{ rel: "canonical", href: "/members" }],
@@ -137,11 +164,17 @@ function MembersPage() {
   });
 
   // Compute current role capacity (excluding super_admin) — matches DB trigger.
-  const nonSuperMembers = members.filter((m) => !m.roles.includes("super_admin") && m.status === "approved");
+  const nonSuperMembers = members.filter(
+    (m) => !m.roles.includes("super_admin") && m.status === "approved",
+  );
   const approvedAdminCount = nonSuperMembers.filter((m) => m.roles.includes("admin")).length;
   const approvedStaffCount = nonSuperMembers.filter((m) => !m.roles.includes("admin")).length;
-  const pendingAdminInvites = invites.filter((i) => !i.accepted_at && new Date(i.expires_at) > new Date() && i.role === "admin").length;
-  const pendingStaffInvites = invites.filter((i) => !i.accepted_at && new Date(i.expires_at) > new Date() && i.role === "staff").length;
+  const pendingAdminInvites = invites.filter(
+    (i) => !i.accepted_at && new Date(i.expires_at) > new Date() && i.role === "admin",
+  ).length;
+  const pendingStaffInvites = invites.filter(
+    (i) => !i.accepted_at && new Date(i.expires_at) > new Date() && i.role === "staff",
+  ).length;
   const canInviteAdmin = approvedAdminCount + pendingAdminInvites < 1;
   const canInviteStaff = approvedStaffCount + pendingStaffInvites < 1;
 
@@ -151,7 +184,12 @@ function MembersPage() {
       if (!uid || !myProfile?.org_id) throw new Error("Missing organization context");
       const { data, error } = await supabase
         .from("org_invites")
-        .insert({ email: email.toLowerCase().trim(), role, org_id: myProfile.org_id, invited_by: uid })
+        .insert({
+          email: email.toLowerCase().trim(),
+          role,
+          org_id: myProfile.org_id,
+          invited_by: uid,
+        })
         .select("token")
         .single();
       if (error) throw error;
@@ -182,8 +220,10 @@ function MembersPage() {
   const handleInviteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail.trim()) return toast.error("Enter an email");
-    if (inviteRole === "admin" && !canInviteAdmin) return toast.error("Limit reached: 1 admin per organization.");
-    if (inviteRole === "staff" && !canInviteStaff) return toast.error("Limit reached: 1 staff per organization.");
+    if (inviteRole === "admin" && !canInviteAdmin)
+      return toast.error("Limit reached: 1 admin per organization.");
+    if (inviteRole === "staff" && !canInviteStaff)
+      return toast.error("Limit reached: 1 staff per organization.");
     createInvite.mutate({ email: inviteEmail, role: inviteRole });
     setInviteEmail("");
   };
@@ -196,7 +236,9 @@ function MembersPage() {
     );
   };
 
-  const pendingInvites = invites.filter((i) => !i.accepted_at && new Date(i.expires_at) > new Date());
+  const pendingInvites = invites.filter(
+    (i) => !i.accepted_at && new Date(i.expires_at) > new Date(),
+  );
 
   const setStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: Status }) => {
@@ -211,7 +253,15 @@ function MembersPage() {
   });
 
   const setRole = useMutation({
-    mutationFn: async ({ userId, current, next }: { userId: string; current: AppRole[]; next: AppRole }) => {
+    mutationFn: async ({
+      userId,
+      current,
+      next,
+    }: {
+      userId: string;
+      current: AppRole[];
+      next: AppRole;
+    }) => {
       // Remove all non-super_admin roles this user currently has, then insert the chosen one.
       const toRemove = current.filter((r) => r !== "super_admin");
       if (toRemove.length > 0) {
@@ -243,52 +293,102 @@ function MembersPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">Invite and manage the people in your organization (max 1 admin + 1 staff).</p>
+        <p className="text-sm text-muted-foreground">
+          Invite and manage the people in your organization (max 1 admin + 1 staff).
+        </p>
         <div className="flex gap-2">
-          <Dialog open={inviteOpen} onOpenChange={(v) => { setInviteOpen(v); if (!v) setLinkForInvite(null); }}>
+          <Dialog
+            open={inviteOpen}
+            onOpenChange={(v) => {
+              setInviteOpen(v);
+              if (!v) setLinkForInvite(null);
+            }}
+          >
             <DialogTrigger asChild>
-              <Button size="sm"><UserPlus className="h-4 w-4 mr-1" /> Invite</Button>
+              <Button size="sm">
+                <UserPlus className="h-4 w-4 mr-1" /> Invite
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Invite a team member</DialogTitle>
-                <DialogDescription>Share the generated link with them. They'll sign up and join your organization automatically.</DialogDescription>
+                <DialogDescription>
+                  Share the generated link with them. They'll sign up and join your organization
+                  automatically.
+                </DialogDescription>
               </DialogHeader>
               {linkForInvite ? (
                 <div className="space-y-3">
                   <Label className="text-sm">Invite link</Label>
                   <div className="flex gap-2">
-                    <Input readOnly value={linkForInvite} onFocus={(e) => e.currentTarget.select()} />
-                    <Button type="button" variant="outline" onClick={() => { navigator.clipboard?.writeText(linkForInvite); toast.success("Copied"); }}>
+                    <Input
+                      readOnly
+                      value={linkForInvite}
+                      onFocus={(e) => e.currentTarget.select()}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        navigator.clipboard?.writeText(linkForInvite);
+                        toast.success("Copied");
+                      }}
+                    >
                       <Copy className="h-4 w-4" />
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">Send this link to the invitee. It expires in 7 days.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Send this link to the invitee. It expires in 7 days.
+                  </p>
                   <DialogFooter>
-                    <Button onClick={() => { setInviteOpen(false); setLinkForInvite(null); }}>Done</Button>
+                    <Button
+                      onClick={() => {
+                        setInviteOpen(false);
+                        setLinkForInvite(null);
+                      }}
+                    >
+                      Done
+                    </Button>
                   </DialogFooter>
                 </div>
               ) : (
                 <form onSubmit={handleInviteSubmit} className="space-y-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="inv-email">Email</Label>
-                    <Input id="inv-email" type="email" required value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="teammate@example.com" />
+                    <Input
+                      id="inv-email"
+                      type="email"
+                      required
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="teammate@example.com"
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Role</Label>
                     <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as AppRole)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="admin" disabled={!canInviteAdmin}>Admin {!canInviteAdmin && "(limit reached)"}</SelectItem>
-                        <SelectItem value="staff" disabled={!canInviteStaff}>Staff {!canInviteStaff && "(limit reached)"}</SelectItem>
+                        <SelectItem value="admin" disabled={!canInviteAdmin}>
+                          Admin {!canInviteAdmin && "(limit reached)"}
+                        </SelectItem>
+                        <SelectItem value="staff" disabled={!canInviteStaff}>
+                          Staff {!canInviteStaff && "(limit reached)"}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Admin slots: {approvedAdminCount + pendingAdminInvites}/1 · Staff slots: {approvedStaffCount + pendingStaffInvites}/1
+                    Admin slots: {approvedAdminCount + pendingAdminInvites}/1 · Staff slots:{" "}
+                    {approvedStaffCount + pendingStaffInvites}/1
                   </p>
                   <DialogFooter>
-                    <Button type="submit" disabled={createInvite.isPending || (!canInviteAdmin && !canInviteStaff)}>
+                    <Button
+                      type="submit"
+                      disabled={createInvite.isPending || (!canInviteAdmin && !canInviteStaff)}
+                    >
                       {createInvite.isPending ? "Creating…" : "Create invite link"}
                     </Button>
                   </DialogFooter>
@@ -296,7 +396,14 @@ function MembersPage() {
               )}
             </DialogContent>
           </Dialog>
-          <Button variant="outline" size="sm" onClick={() => { qc.invalidateQueries({ queryKey: ["org_members"] }); qc.invalidateQueries({ queryKey: ["org_invites"] }); }}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              qc.invalidateQueries({ queryKey: ["org_members"] });
+              qc.invalidateQueries({ queryKey: ["org_invites"] });
+            }}
+          >
             <RefreshCw className="h-4 w-4 mr-1" /> Refresh
           </Button>
         </div>
@@ -311,10 +418,16 @@ function MembersPage() {
                 <div key={inv.id} className="flex items-center gap-2 flex-wrap text-sm">
                   <span className="font-medium truncate max-w-[180px]">{inv.email}</span>
                   <Badge variant="secondary">{inv.role}</Badge>
-                  <span className="text-xs text-muted-foreground">expires {new Date(inv.expires_at).toLocaleDateString()}</span>
+                  <span className="text-xs text-muted-foreground">
+                    expires {new Date(inv.expires_at).toLocaleDateString()}
+                  </span>
                   <div className="ml-auto flex gap-1">
-                    <Button size="sm" variant="outline" onClick={() => copyLink(inv.token)}><Copy className="h-4 w-4" /></Button>
-                    <Button size="sm" variant="outline" onClick={() => revokeInvite.mutate(inv.id)}><Trash2 className="h-4 w-4" /></Button>
+                    <Button size="sm" variant="outline" onClick={() => copyLink(inv.token)}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => revokeInvite.mutate(inv.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -326,57 +439,80 @@ function MembersPage() {
       {/* Mobile cards */}
       <div className="sm:hidden space-y-2">
         {isLoading ? (
-          <Card><CardContent className="p-4 text-center text-sm text-muted-foreground">Loading…</CardContent></Card>
+          <Card>
+            <CardContent className="p-4 text-center text-sm text-muted-foreground">
+              Loading…
+            </CardContent>
+          </Card>
         ) : members.length === 0 ? (
-          <Card><CardContent className="p-4 text-center text-sm text-muted-foreground">No members yet.</CardContent></Card>
-        ) : members.map((m) => {
-          const isMe = m.id === me;
-          const role = primaryRole(m.roles);
-          const isSuper = m.roles.includes("super_admin");
-          return (
-            <Card key={m.id}>
-              <CardContent className="p-3 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">{m.full_name || "—"}</div>
-                    <div className="text-xs text-muted-foreground truncate">{m.email}</div>
-                  </div>
-                  {statusBadge(m.status)}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={role}
-                    disabled={isMe || isSuper || setRole.isPending}
-                    onValueChange={(v) => setRole.mutate({ userId: m.id, current: m.roles, next: v as AppRole })}
-                  >
-                    <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="staff">Staff</SelectItem>
-                      {isSuper && <SelectItem value="super_admin">Super admin</SelectItem>}
-                    </SelectContent>
-                  </Select>
-                  {!isMe && !isSuper && (
-                    <div className="ml-auto flex gap-1">
-                      {m.status !== "approved" && (
-                        <Button size="sm" variant="outline" onClick={() => setStatus.mutate({ id: m.id, status: "approved" })}>
-                          <Check className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {m.status !== "rejected" && (
-                        <Button size="sm" variant="outline" onClick={() => {
-                          if (confirm(`Remove ${m.full_name || m.email}?`)) setStatus.mutate({ id: m.id, status: "rejected" });
-                        }}>
-                          <Ban className="h-4 w-4" />
-                        </Button>
-                      )}
+          <Card>
+            <CardContent className="p-4 text-center text-sm text-muted-foreground">
+              No members yet.
+            </CardContent>
+          </Card>
+        ) : (
+          members.map((m) => {
+            const isMe = m.id === me;
+            const role = primaryRole(m.roles);
+            const isSuper = m.roles.includes("super_admin");
+            return (
+              <Card key={m.id}>
+                <CardContent className="p-3 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{m.full_name || "—"}</div>
+                      <div className="text-xs text-muted-foreground truncate">{m.email}</div>
                     </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+                    {statusBadge(m.status)}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={role}
+                      disabled={isMe || isSuper || setRole.isPending}
+                      onValueChange={(v) =>
+                        setRole.mutate({ userId: m.id, current: m.roles, next: v as AppRole })
+                      }
+                    >
+                      <SelectTrigger className="h-8 w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="staff">Staff</SelectItem>
+                        {isSuper && <SelectItem value="super_admin">Super admin</SelectItem>}
+                      </SelectContent>
+                    </Select>
+                    {!isMe && !isSuper && (
+                      <div className="ml-auto flex gap-1">
+                        {m.status !== "approved" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setStatus.mutate({ id: m.id, status: "approved" })}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {m.status !== "rejected" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              if (confirm(`Remove ${m.full_name || m.email}?`))
+                                setStatus.mutate({ id: m.id, status: "rejected" });
+                            }}
+                          >
+                            <Ban className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
       </div>
 
       {/* Desktop table */}
@@ -394,55 +530,81 @@ function MembersPage() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Loading…</TableCell></TableRow>
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    Loading…
+                  </TableCell>
+                </TableRow>
               ) : members.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">No members yet.</TableCell></TableRow>
-              ) : members.map((m) => {
-                const isMe = m.id === me;
-                const role = primaryRole(m.roles);
-                const isSuper = m.roles.includes("super_admin");
-                return (
-                  <TableRow key={m.id}>
-                    <TableCell className="font-medium">{m.full_name || "—"}{isMe && <span className="ml-1 text-xs text-muted-foreground">(you)</span>}</TableCell>
-                    <TableCell className="text-sm">{m.email}</TableCell>
-                    <TableCell>{statusBadge(m.status)}</TableCell>
-                    <TableCell>
-                      <Select
-                        value={role}
-                        disabled={isMe || isSuper || setRole.isPending}
-                        onValueChange={(v) => setRole.mutate({ userId: m.id, current: m.roles, next: v as AppRole })}
-                      >
-                        <SelectTrigger className="h-8 w-36"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="staff">Staff</SelectItem>
-                          {isSuper && <SelectItem value="super_admin">Super admin</SelectItem>}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {isMe || isSuper ? (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      ) : (
-                        <div className="inline-flex gap-2">
-                          {m.status !== "approved" && (
-                            <Button size="sm" variant="outline" onClick={() => setStatus.mutate({ id: m.id, status: "approved" })}>
-                              <Check className="h-4 w-4 mr-1" /> Approve
-                            </Button>
-                          )}
-                          {m.status !== "rejected" && (
-                            <Button size="sm" variant="outline" onClick={() => {
-                              if (confirm(`Remove ${m.full_name || m.email}?`)) setStatus.mutate({ id: m.id, status: "rejected" });
-                            }}>
-                              <X className="h-4 w-4 mr-1" /> Remove
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    No members yet.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                members.map((m) => {
+                  const isMe = m.id === me;
+                  const role = primaryRole(m.roles);
+                  const isSuper = m.roles.includes("super_admin");
+                  return (
+                    <TableRow key={m.id}>
+                      <TableCell className="font-medium">
+                        {m.full_name || "—"}
+                        {isMe && <span className="ml-1 text-xs text-muted-foreground">(you)</span>}
+                      </TableCell>
+                      <TableCell className="text-sm">{m.email}</TableCell>
+                      <TableCell>{statusBadge(m.status)}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={role}
+                          disabled={isMe || isSuper || setRole.isPending}
+                          onValueChange={(v) =>
+                            setRole.mutate({ userId: m.id, current: m.roles, next: v as AppRole })
+                          }
+                        >
+                          <SelectTrigger className="h-8 w-36">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="staff">Staff</SelectItem>
+                            {isSuper && <SelectItem value="super_admin">Super admin</SelectItem>}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {isMe || isSuper ? (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        ) : (
+                          <div className="inline-flex gap-2">
+                            {m.status !== "approved" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setStatus.mutate({ id: m.id, status: "approved" })}
+                              >
+                                <Check className="h-4 w-4 mr-1" /> Approve
+                              </Button>
+                            )}
+                            {m.status !== "rejected" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  if (confirm(`Remove ${m.full_name || m.email}?`))
+                                    setStatus.mutate({ id: m.id, status: "rejected" });
+                                }}
+                              >
+                                <X className="h-4 w-4 mr-1" /> Remove
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
         </CardContent>

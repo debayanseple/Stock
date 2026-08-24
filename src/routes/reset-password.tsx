@@ -113,7 +113,9 @@ function ResetPasswordPage() {
                   </button>
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>{loading ? "Updating…" : "Update password"}</Button>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Updating…" : "Update password"}
+              </Button>
             </form>
           )}
         </CardContent>

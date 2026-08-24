@@ -4,7 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,17 +23,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Check, X, Building2, Users, Clock, CheckCircle2, XCircle, TrendingUp, Ban } from "lucide-react";
-import { useMemo, useState } from "react";
 import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
+  Check,
+  X,
+  Building2,
+  Users,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  TrendingUp,
+  Ban,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   beforeLoad: async () => {
@@ -43,9 +52,15 @@ export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
       { title: "Admin portal — StockLine" },
-      { name: "description", content: "Super admin portal to approve organizations and manage tenant access." },
+      {
+        name: "description",
+        content: "Super admin portal to approve organizations and manage tenant access.",
+      },
       { property: "og:title", content: "Admin portal — StockLine" },
-      { property: "og:description", content: "Super admin portal to approve organizations and manage tenant access." },
+      {
+        property: "og:description",
+        content: "Super admin portal to approve organizations and manage tenant access.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -53,7 +68,14 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 type Org = { id: string; name: string; status: string; created_at: string };
-type Profile = { id: string; email: string | null; full_name: string | null; status: string; org_id: string | null; created_at: string };
+type Profile = {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  status: string;
+  org_id: string | null;
+  created_at: string;
+};
 
 const SUPER_ORG_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -61,12 +83,25 @@ function AdminPage() {
   return <AdminPageInner />;
 }
 
-function StatCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: React.ReactNode; tone?: "success" | "warning" | "danger" }) {
+function StatCard({
+  icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  tone?: "success" | "warning" | "danger";
+}) {
   const toneClass =
-    tone === "success" ? "text-[color:var(--success,theme(colors.green.600))]" :
-    tone === "warning" ? "text-amber-600" :
-    tone === "danger" ? "text-destructive" :
-    "text-foreground";
+    tone === "success"
+      ? "text-[color:var(--success,theme(colors.green.600))]"
+      : tone === "warning"
+        ? "text-amber-600"
+        : tone === "danger"
+          ? "text-destructive"
+          : "text-foreground";
   return (
     <Card>
       <CardContent className="p-4">
@@ -165,8 +200,18 @@ function AdminPageInner() {
   const recentOrgs = (orgs.data ?? []).slice(0, 5);
 
   const setOrgStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: "approved" | "rejected" | "suspended" }) => {
-      const patch: { status: "approved" | "rejected" | "suspended"; approved_at?: string; approved_by?: string | null } = { status };
+    mutationFn: async ({
+      id,
+      status,
+    }: {
+      id: string;
+      status: "approved" | "rejected" | "suspended";
+    }) => {
+      const patch: {
+        status: "approved" | "rejected" | "suspended";
+        approved_at?: string;
+        approved_by?: string | null;
+      } = { status };
       if (status === "approved") {
         const { data: userRes } = await supabase.auth.getUser();
         patch.approved_at = new Date().toISOString();
@@ -176,14 +221,19 @@ function AdminPageInner() {
       if (error) throw error;
       // cascade status to member profiles so their access reflects org state
       const profileStatus = status === "suspended" ? "rejected" : status;
-      const { error: pErr } = await supabase.from("profiles").update({ status: profileStatus }).eq("org_id", id);
+      const { error: pErr } = await supabase
+        .from("profiles")
+        .update({ status: profileStatus })
+        .eq("org_id", id);
       if (pErr) throw pErr;
     },
     onSuccess: (_d, v) => {
       toast.success(
-        v.status === "approved" ? "Organization approved" :
-        v.status === "suspended" ? "Organization suspended" :
-        "Organization rejected"
+        v.status === "approved"
+          ? "Organization approved"
+          : v.status === "suspended"
+            ? "Organization suspended"
+            : "Organization rejected",
       );
       qc.invalidateQueries({ queryKey: ["admin"] });
     },
@@ -209,17 +259,30 @@ function AdminPageInner() {
     variant: "default" | "destructive";
     onConfirm: () => void;
   };
-  const [confirm, setConfirm] = useState<ConfirmState>({ open: false, title: "", description: "", variant: "default", onConfirm: () => {} });
+  const [confirm, setConfirm] = useState<ConfirmState>({
+    open: false,
+    title: "",
+    description: "",
+    variant: "default",
+    onConfirm: () => {},
+  });
 
-  function askConfirm({ title, description, variant = "default", onConfirm }: Omit<ConfirmState, "open" | "variant"> & { variant?: "default" | "destructive" }) {
+  function askConfirm({
+    title,
+    description,
+    variant = "default",
+    onConfirm,
+  }: Omit<ConfirmState, "open" | "variant"> & { variant?: "default" | "destructive" }) {
     setConfirm({ open: true, title, description, variant, onConfirm });
   }
 
   const statusBadge = (s: string) => {
     const variant =
-      s === "approved" ? "default" :
-      s === "rejected" || s === "suspended" ? "destructive" :
-      "secondary";
+      s === "approved"
+        ? "default"
+        : s === "rejected" || s === "suspended"
+          ? "destructive"
+          : "secondary";
     return <Badge variant={variant as "default" | "destructive" | "secondary"}>{s}</Badge>;
   };
 
@@ -227,23 +290,64 @@ function AdminPageInner() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-semibold">Overview</h2>
-        <p className="text-sm text-muted-foreground">Platform-wide activity across all organizations.</p>
+        <p className="text-sm text-muted-foreground">
+          Platform-wide activity across all organizations.
+        </p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard icon={<Building2 className="h-4 w-4" />} label="Organizations" value={stats.totalOrgs} />
-        <StatCard icon={<Clock className="h-4 w-4" />} label="Pending orgs" value={stats.pendingOrgs} tone="warning" />
-        <StatCard icon={<CheckCircle2 className="h-4 w-4" />} label="Approved orgs" value={stats.approvedOrgs} tone="success" />
-        <StatCard icon={<XCircle className="h-4 w-4" />} label="Rejected orgs" value={stats.rejectedOrgs} tone="danger" />
-        <StatCard icon={<Users className="h-4 w-4" />} label="Total users" value={stats.totalUsers} />
-        <StatCard icon={<Clock className="h-4 w-4" />} label="Pending users" value={stats.pendingUsers} tone="warning" />
-        <StatCard icon={<CheckCircle2 className="h-4 w-4" />} label="Approved users" value={stats.approvedUsers} tone="success" />
-        <StatCard icon={<TrendingUp className="h-4 w-4" />} label="Avg users / org" value={stats.approvedOrgs ? (stats.approvedUsers / stats.approvedOrgs).toFixed(1) : "0"} />
+        <StatCard
+          icon={<Building2 className="h-4 w-4" />}
+          label="Organizations"
+          value={stats.totalOrgs}
+        />
+        <StatCard
+          icon={<Clock className="h-4 w-4" />}
+          label="Pending orgs"
+          value={stats.pendingOrgs}
+          tone="warning"
+        />
+        <StatCard
+          icon={<CheckCircle2 className="h-4 w-4" />}
+          label="Approved orgs"
+          value={stats.approvedOrgs}
+          tone="success"
+        />
+        <StatCard
+          icon={<XCircle className="h-4 w-4" />}
+          label="Rejected orgs"
+          value={stats.rejectedOrgs}
+          tone="danger"
+        />
+        <StatCard
+          icon={<Users className="h-4 w-4" />}
+          label="Total users"
+          value={stats.totalUsers}
+        />
+        <StatCard
+          icon={<Clock className="h-4 w-4" />}
+          label="Pending users"
+          value={stats.pendingUsers}
+          tone="warning"
+        />
+        <StatCard
+          icon={<CheckCircle2 className="h-4 w-4" />}
+          label="Approved users"
+          value={stats.approvedUsers}
+          tone="success"
+        />
+        <StatCard
+          icon={<TrendingUp className="h-4 w-4" />}
+          label="Avg users / org"
+          value={stats.approvedOrgs ? (stats.approvedUsers / stats.approvedOrgs).toFixed(1) : "0"}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader><CardTitle>Signups · last 30 days</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Signups · last 30 days</CardTitle>
+          </CardHeader>
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={signupChart}>
@@ -259,17 +363,24 @@ function AdminPageInner() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Pending approvals</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Pending approvals</CardTitle>
+          </CardHeader>
           <CardContent>
             {pendingOrgs.length === 0 ? (
               <p className="text-sm text-muted-foreground">No organizations awaiting approval.</p>
             ) : (
               <ul className="space-y-2">
                 {pendingOrgs.map((o) => (
-                  <li key={o.id} className="flex items-center justify-between gap-2 border rounded-md p-2">
+                  <li
+                    key={o.id}
+                    className="flex items-center justify-between gap-2 border rounded-md p-2"
+                  >
                     <div className="min-w-0">
                       <div className="font-medium truncate">{o.name}</div>
-                      <div className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString()}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {new Date(o.created_at).toLocaleDateString()}
+                      </div>
                     </div>
                     <div className="flex gap-1">
                       <Button
@@ -312,7 +423,9 @@ function AdminPageInner() {
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Organizations</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Organizations</CardTitle>
+        </CardHeader>
         <CardContent className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -328,7 +441,9 @@ function AdminPageInner() {
                 <TableRow key={o.id}>
                   <TableCell className="font-medium">{o.name}</TableCell>
                   <TableCell>{statusBadge(o.status)}</TableCell>
-                  <TableCell className="text-muted-foreground">{new Date(o.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {new Date(o.created_at).toLocaleDateString()}
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="inline-flex gap-1 justify-end">
                       {o.status !== "approved" && (
@@ -337,14 +452,23 @@ function AdminPageInner() {
                           className="h-8 w-8"
                           onClick={() =>
                             askConfirm({
-                              title: o.status === "suspended" ? "Reactivate organization" : "Approve organization",
-                              description: o.status === "suspended"
-                                ? `Reactivate "${o.name}"? All members will regain access.`
-                                : `Approve "${o.name}"? This will grant access to all members immediately.`,
-                              onConfirm: () => setOrgStatus.mutate({ id: o.id, status: "approved" }),
+                              title:
+                                o.status === "suspended"
+                                  ? "Reactivate organization"
+                                  : "Approve organization",
+                              description:
+                                o.status === "suspended"
+                                  ? `Reactivate "${o.name}"? All members will regain access.`
+                                  : `Approve "${o.name}"? This will grant access to all members immediately.`,
+                              onConfirm: () =>
+                                setOrgStatus.mutate({ id: o.id, status: "approved" }),
                             })
                           }
-                          aria-label={o.status === "suspended" ? "Reactivate organization" : "Approve organization"}
+                          aria-label={
+                            o.status === "suspended"
+                              ? "Reactivate organization"
+                              : "Approve organization"
+                          }
                           title={o.status === "suspended" ? "Reactivate" : "Approve"}
                         >
                           <Check className="h-4 w-4" />
@@ -360,7 +484,8 @@ function AdminPageInner() {
                               title: "Suspend organization",
                               description: `Suspend "${o.name}"? All members will lose access until reactivated.`,
                               variant: "destructive",
-                              onConfirm: () => setOrgStatus.mutate({ id: o.id, status: "suspended" }),
+                              onConfirm: () =>
+                                setOrgStatus.mutate({ id: o.id, status: "suspended" }),
                             })
                           }
                           aria-label="Suspend organization"
@@ -379,7 +504,8 @@ function AdminPageInner() {
                               title: "Reject organization",
                               description: `Reject "${o.name}"? This will deny access to all members.`,
                               variant: "destructive",
-                              onConfirm: () => setOrgStatus.mutate({ id: o.id, status: "rejected" }),
+                              onConfirm: () =>
+                                setOrgStatus.mutate({ id: o.id, status: "rejected" }),
                             })
                           }
                           aria-label="Reject organization"
@@ -398,7 +524,9 @@ function AdminPageInner() {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Users</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Users</CardTitle>
+        </CardHeader>
         <CardContent className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -415,7 +543,9 @@ function AdminPageInner() {
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">{p.full_name ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{p.email ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{p.org_id ? (orgNameById.get(p.org_id) ?? "—") : "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {p.org_id ? (orgNameById.get(p.org_id) ?? "—") : "—"}
+                  </TableCell>
                   <TableCell>{statusBadge(p.status)}</TableCell>
                   <TableCell className="text-right">
                     <div className="inline-flex gap-1 justify-end">
@@ -429,7 +559,8 @@ function AdminPageInner() {
                               title: "Suspend user",
                               description: `Suspend ${p.full_name ?? p.email ?? "this user"}? They will lose access immediately.`,
                               variant: "destructive",
-                              onConfirm: () => setProfileStatus.mutate({ id: p.id, status: "rejected" }),
+                              onConfirm: () =>
+                                setProfileStatus.mutate({ id: p.id, status: "rejected" }),
                             })
                           }
                           aria-label="Suspend user"
@@ -456,9 +587,15 @@ function AdminPageInner() {
             <AlertDialogDescription>{confirm.description}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setConfirm((c) => ({ ...c, open: false }))}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setConfirm((c) => ({ ...c, open: false }))}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
-              className={confirm.variant === "destructive" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+              className={
+                confirm.variant === "destructive"
+                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  : ""
+              }
               onClick={() => {
                 confirm.onConfirm();
                 setConfirm((c) => ({ ...c, open: false }));
