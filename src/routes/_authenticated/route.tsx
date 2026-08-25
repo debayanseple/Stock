@@ -157,7 +157,7 @@ function LayoutShell() {
   // Staff accounts live in Billing: no Dashboard nav, and /dashboard bounces there.
   const rolesResolved = isSuperAdmin !== undefined && isOrgAdmin !== undefined;
   const isStaffOnly = isSuperAdmin === false && isOrgAdmin === false;
-  const homePath = isSuperAdmin ? "/admin" : "/billing";
+  const homePath = isSuperAdmin ? "/admin" : isOrgAdmin ? "/dashboard" : "/billing";
 
   useEffect(() => {
     if (rolesResolved && isStaffOnly && pathname === "/dashboard") {
@@ -169,6 +169,13 @@ function LayoutShell() {
   const visibleNavItems = isStaffOnly
     ? navItems.filter((item) => item.url !== "/dashboard")
     : [...navItems];
+
+  // Admins get Dashboard as the top menu item; everyone else keeps Billing first.
+  const navForRole = (() => {
+    if (!isOrgAdmin) return visibleNavItems;
+    const dash = visibleNavItems.find((item) => item.url === "/dashboard");
+    return dash ? [dash, ...visibleNavItems.filter((item) => item !== dash)] : visibleNavItems;
+  })();
 
   const signOut = async () => {
     closeOnMobile();
@@ -196,7 +203,7 @@ function LayoutShell() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {!isSuperAdmin &&
-                  visibleNavItems.map((item) => (
+                  navForRole.map((item) => (
                     <SidebarMenuItem key={item.url}>
                       <SidebarMenuButton
                         asChild

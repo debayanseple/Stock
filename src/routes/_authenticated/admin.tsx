@@ -144,6 +144,25 @@ function AdminPageInner() {
     },
   });
 
+  const roleRows = useQuery({
+    queryKey: ["admin", "user_roles"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("user_roles").select("user_id, role");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const rolesByUser = useMemo(() => {
+    const m = new Map<string, string[]>();
+    (roleRows.data ?? []).forEach((r) => {
+      const arr = m.get(r.user_id) ?? [];
+      arr.push(r.role as string);
+      m.set(r.user_id, arr);
+    });
+    return m;
+  }, [roleRows.data]);
+
   const stats = useMemo(() => {
     const o = orgs.data ?? [];
     const p = profiles.data ?? [];
@@ -534,6 +553,7 @@ function AdminPageInner() {
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Organization</TableHead>
+                <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -545,6 +565,29 @@ function AdminPageInner() {
                   <TableCell className="text-muted-foreground">{p.email ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {p.org_id ? (orgNameById.get(p.org_id) ?? "—") : "—"}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {(rolesByUser.get(p.id) ?? []).length === 0 ? (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      ) : (
+                        (rolesByUser.get(p.id) ?? []).map((r) => (
+                          <Badge
+                            key={r}
+                            variant={
+                              r === "super_admin"
+                                ? "destructive"
+                                : r === "admin"
+                                  ? "default"
+                                  : "secondary"
+                            }
+                            className="capitalize"
+                          >
+                            {r.replace("_", " ")}
+                          </Badge>
+                        ))
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>{statusBadge(p.status)}</TableCell>
                   <TableCell className="text-right">

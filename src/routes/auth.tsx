@@ -69,7 +69,7 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session && !inviteToken) navigate({ to: "/billing" });
+      if (data.session && !inviteToken) navigate({ to: "/" });
     });
   }, [navigate, inviteToken]);
 
@@ -80,7 +80,7 @@ function AuthPage() {
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Signed in");
-    navigate({ to: "/billing" });
+    navigate({ to: "/" });
   };
 
   const handleSignUp = async (e: React.FormEvent) => {

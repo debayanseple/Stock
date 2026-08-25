@@ -73,7 +73,7 @@ function PendingPage() {
           icon: <CheckCircle2 className="h-4 w-4" />,
         });
         localStorage.setItem("stockline:justApproved", "1");
-        window.setTimeout(() => navigate({ to: "/billing", replace: true }), 1200);
+        window.setTimeout(() => navigate({ to: "/", replace: true }), 1200);
       } else if (current === "rejected") {
         toast.error("Your account request was declined", {
           icon: <XCircle className="h-4 w-4" />,
@@ -103,7 +103,7 @@ function PendingPage() {
             icon: <CheckCircle2 className="h-4 w-4" />,
           },
         );
-        window.setTimeout(() => navigate({ to: "/billing", replace: true }), 1200);
+        window.setTimeout(() => navigate({ to: "/", replace: true }), 1200);
       } else if (current === "rejected") {
         toast.error("Your organization request was declined", {
           icon: <XCircle className="h-4 w-4" />,
@@ -116,7 +116,7 @@ function PendingPage() {
   // Skip pending screen entirely for users already approved on first load.
   useEffect(() => {
     if (profile?.status === "approved" && !prevStatus.current) {
-      navigate({ to: "/billing", replace: true });
+      navigate({ to: "/", replace: true });
     }
   }, [profile?.status, navigate]);
 
