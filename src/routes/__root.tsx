@@ -52,6 +52,14 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <p className="mt-2 text-sm text-muted-foreground">
           Something went wrong on our end. You can try refreshing or head back home.
         </p>
+        <details className="mt-4 rounded-md border bg-muted/40 p-3 text-left">
+          <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
+            Technical details
+          </summary>
+          <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words text-[11px] text-muted-foreground">
+            {error instanceof Error ? `${error.name}: ${error.message}` : String(error)}
+          </pre>
+        </details>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -68,6 +76,20 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           >
             Go home
           </a>
+          <button
+            onClick={() => {
+              try {
+                localStorage.clear();
+                sessionStorage.clear();
+              } catch {
+                /* ignore */
+              }
+              window.location.href = "/auth";
+            }}
+            className="inline-flex items-center justify-center rounded-md border border-destructive/40 px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+          >
+            Reset local data
+          </button>
         </div>
       </div>
     </div>

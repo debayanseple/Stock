@@ -15,6 +15,11 @@ export const getRouter = () => {
       queries: {
         refetchOnWindowFocus: true,
         refetchOnReconnect: true,
+        // Cached data is served instantly on revisit; a background refresh
+        // keeps it accurate without blocking the UI.
+        staleTime: 30_000,
+        gcTime: 10 * 60_000,
+        retry: 1,
       },
     },
   });
@@ -31,6 +36,9 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
+    // Start loading the target route's JS chunk on hover/focus of a Link,
+    // so clicking feels instant even on first visit.
+    defaultPreload: "intent",
     defaultPreloadStaleTime: 0,
   });
 

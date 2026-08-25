@@ -23,13 +23,13 @@ export async function createBill(input: CreateBillInput): Promise<{ bill_id: str
 
   const { data: billId, error } = await supabase.rpc("create_bill_with_stock", {
     _org_id: profile.org_id,
-    _customer_name: input.customer_name ?? null,
-    _customer_phone: input.customer_phone ?? null,
-    _customer_email: input.customer_email || null,
+    _customer_name: input.customer_name ?? "",
+    _customer_phone: input.customer_phone ?? "",
+    _customer_email: input.customer_email || "",
     _items: input.items,
     _payment_method: input.payment_method,
     _paid_amount: input.paid_amount,
-    _notes: input.notes ?? null,
+    _notes: input.notes ?? "",
     _discount_amount: input.discount_amount,
     _tax_amount: input.tax_amount,
   });
@@ -73,7 +73,7 @@ export async function updateBillPayment(input: {
 export async function getBills(limit = 50, offset = 0): Promise<Bill[]> {
   const { data, error } = await supabase
     .from("bills")
-    .select("*, bill_items(*)")
+    .select("*, items:bill_items(*)")
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -84,7 +84,7 @@ export async function getBills(limit = 50, offset = 0): Promise<Bill[]> {
 export async function getBillById(billId: string): Promise<Bill> {
   const { data, error } = await supabase
     .from("bills")
-    .select("*, bill_items(*)")
+    .select("*, items:bill_items(*)")
     .eq("id", billId)
     .single();
 

@@ -49,7 +49,7 @@ function ResetPasswordPage() {
     if (error) return toast.error(error.message);
     toast.success("Password updated. Please sign in.");
     await supabase.auth.signOut();
-    navigate({ to: "/auth" });
+    navigate({ to: "/auth", search: { invite: undefined } });
   };
 
   return (

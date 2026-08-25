@@ -153,7 +153,7 @@ function Dashboard() {
   const products = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("*");
+      const { data, error } = await supabase.from("products").select("*").is("deleted_at", null);
       if (error) throw error;
       return data as Product[];
     },

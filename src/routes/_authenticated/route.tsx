@@ -7,7 +7,9 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { prefetchSection } from "@/lib/prefetch";
 import {
   Sidebar,
   SidebarContent,
@@ -42,7 +44,7 @@ export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async ({ location }) => {
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/auth" });
+    if (error || !data.user) throw redirect({ to: "/auth", search: { invite: undefined } });
     const { data: profile } = await supabase
       .from("profiles")
       .select("status, org_id")
@@ -77,12 +79,12 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 const navItems = [
+  { title: "Billing", url: "/billing", icon: Receipt },
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Products", url: "/products", icon: Package },
   { title: "Categories", url: "/categories", icon: Tags },
   { title: "Suppliers", url: "/suppliers", icon: Truck },
   { title: "Transactions", url: "/transactions", icon: ArrowLeftRight },
-  { title: "Billing", url: "/billing", icon: Receipt },
 ] as const;
 
 function AuthedLayout() {
@@ -96,6 +98,7 @@ function AuthedLayout() {
 function LayoutShell() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const { user } = Route.useRouteContext();
   const { setOpenMobile, isMobile } = useSidebar();
 
@@ -151,21 +154,34 @@ function LayoutShell() {
     if (isMobile) setOpenMobile(false);
   };
 
+  // Staff accounts live in Billing: no Dashboard nav, and /dashboard bounces there.
+  const rolesResolved = isSuperAdmin !== undefined && isOrgAdmin !== undefined;
+  const isStaffOnly = isSuperAdmin === false && isOrgAdmin === false;
+  const homePath = isSuperAdmin ? "/admin" : "/billing";
+
+  useEffect(() => {
+    if (rolesResolved && isStaffOnly && pathname === "/dashboard") {
+      navigate({ to: "/billing", replace: true });
+    }
+  }, [rolesResolved, isStaffOnly, pathname, navigate]);
+
+  // Hide Dashboard from staff-only users.
+  const visibleNavItems = isStaffOnly
+    ? navItems.filter((item) => item.url !== "/dashboard")
+    : [...navItems];
+
   const signOut = async () => {
     closeOnMobile();
     await supabase.auth.signOut();
     toast.success("Signed out");
-    navigate({ to: "/auth", replace: true });
+    navigate({ to: "/auth", search: { invite: undefined }, replace: true });
   };
 
   return (
     <div className="min-h-screen flex w-full bg-muted/20">
       <Sidebar collapsible="icon">
         <SidebarHeader className="border-b">
-          <Link
-            to={isSuperAdmin ? "/admin" : "/dashboard"}
-            className="flex items-center gap-2 px-2 py-2"
-          >
+          <Link to={homePath} className="flex items-center gap-2 px-2 py-2">
             <img
               src="/logo.png"
               alt="StockLine"
@@ -180,9 +196,14 @@ function LayoutShell() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {!isSuperAdmin &&
-                  navItems.map((item) => (
+                  visibleNavItems.map((item) => (
                     <SidebarMenuItem key={item.url}>
-                      <SidebarMenuButton asChild isActive={pathname === item.url}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={pathname === item.url}
+                        onMouseEnter={() => prefetchSection(qc, item.url)}
+                        onFocus={() => prefetchSection(qc, item.url)}
+                      >
                         <Link to={item.url} onClick={closeOnMobile}>
                           <item.icon className="h-4 w-4" />
                           <span>{item.title}</span>

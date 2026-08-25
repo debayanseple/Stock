@@ -40,7 +40,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGri
 export const Route = createFileRoute("/_authenticated/admin")({
   beforeLoad: async () => {
     const { data: userRes } = await supabase.auth.getUser();
-    if (!userRes.user) throw redirect({ to: "/auth" });
+    if (!userRes.user) throw redirect({ to: "/auth", search: { invite: undefined } });
     const { data } = await supabase
       .from("user_roles")
       .select("role")

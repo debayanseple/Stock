@@ -4,10 +4,129 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5";
+    PostgrestVersion: "14.15";
   };
   public: {
     Tables: {
+      bill_items: {
+        Row: {
+          bill_id: string;
+          created_at: string;
+          id: string;
+          line_total: number;
+          product_id: string;
+          product_name: string;
+          product_sku: string;
+          quantity: number;
+          unit_price: number;
+        };
+        Insert: {
+          bill_id: string;
+          created_at?: string;
+          id?: string;
+          line_total: number;
+          product_id: string;
+          product_name: string;
+          product_sku: string;
+          quantity: number;
+          unit_price: number;
+        };
+        Update: {
+          bill_id?: string;
+          created_at?: string;
+          id?: string;
+          line_total?: number;
+          product_id?: string;
+          product_name?: string;
+          product_sku?: string;
+          quantity?: number;
+          unit_price?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bill_items_bill_id_fkey";
+            columns: ["bill_id"];
+            isOneToOne: false;
+            referencedRelation: "bills";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bill_items_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      bills: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          customer_email: string | null;
+          customer_name: string | null;
+          customer_phone: string | null;
+          discount_amount: number;
+          due_amount: number;
+          id: string;
+          notes: string | null;
+          org_id: string;
+          paid_amount: number;
+          payment_method: Database["public"]["Enums"]["payment_method"] | null;
+          payment_status: Database["public"]["Enums"]["payment_status"];
+          subtotal: number;
+          tax_amount: number;
+          total_amount: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          customer_email?: string | null;
+          customer_name?: string | null;
+          customer_phone?: string | null;
+          discount_amount?: number;
+          due_amount?: number;
+          id?: string;
+          notes?: string | null;
+          org_id: string;
+          paid_amount?: number;
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null;
+          payment_status?: Database["public"]["Enums"]["payment_status"];
+          subtotal?: number;
+          tax_amount?: number;
+          total_amount?: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          customer_email?: string | null;
+          customer_name?: string | null;
+          customer_phone?: string | null;
+          discount_amount?: number;
+          due_amount?: number;
+          id?: string;
+          notes?: string | null;
+          org_id?: string;
+          paid_amount?: number;
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null;
+          payment_status?: Database["public"]["Enums"]["payment_status"];
+          subtotal?: number;
+          tax_amount?: number;
+          total_amount?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bills_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       categories: {
         Row: {
           created_at: string;
@@ -127,6 +246,7 @@ export type Database = {
         Row: {
           category_id: string | null;
           created_at: string;
+          deleted_at: string | null;
           description: string | null;
           id: string;
           name: string;
@@ -141,6 +261,7 @@ export type Database = {
         Insert: {
           category_id?: string | null;
           created_at?: string;
+          deleted_at?: string | null;
           description?: string | null;
           id?: string;
           name: string;
@@ -155,6 +276,7 @@ export type Database = {
         Update: {
           category_id?: string | null;
           created_at?: string;
+          deleted_at?: string | null;
           description?: string | null;
           id?: string;
           name?: string;
@@ -410,6 +532,21 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      create_bill_with_stock: {
+        Args: {
+          _customer_email: string;
+          _customer_name: string;
+          _customer_phone: string;
+          _discount_amount?: number;
+          _items: Json;
+          _notes: string;
+          _org_id: string;
+          _paid_amount: number;
+          _payment_method: Database["public"]["Enums"]["payment_method"];
+          _tax_amount?: number;
+        };
+        Returns: string;
+      };
       current_user_org: { Args: never; Returns: string };
       get_invite_by_token: {
         Args: { _token: string };
@@ -438,6 +575,8 @@ export type Database = {
     };
     Enums: {
       app_role: "admin" | "staff" | "super_admin";
+      payment_method: "cash" | "upi" | "card" | "other";
+      payment_status: "pending" | "partial" | "paid";
       txn_type: "in" | "out";
     };
     CompositeTypes: {
@@ -561,6 +700,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "staff", "super_admin"],
+      payment_method: ["cash", "upi", "card", "other"],
+      payment_status: ["pending", "partial", "paid"],
       txn_type: ["in", "out"],
     },
   },

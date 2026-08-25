@@ -44,8 +44,15 @@ import {
   Mail,
   Phone,
   History,
+  Upload,
 } from "lucide-react";
 import type { Category, Product, Supplier } from "@/lib/inventory-types";
+import {
+  parseProductsCsv,
+  buildProductTemplate,
+  resolveRefIds,
+  type ParsedProduct,
+} from "@/lib/csv-import";
 import { stockStatus, downloadCSV, formatINR } from "@/lib/inventory-types";
 import { useProfile } from "@/hooks/use-profile";
 
@@ -119,6 +126,8 @@ function ProductsPage() {
   const [globalTxnError, setGlobalTxnError] = useState<string | null>(null);
   const globalTxnQtyRef = useRef<HTMLInputElement>(null);
   const [quickTxnOpen, setQuickTxnOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importText, setImportText] = useState("");
 
   const [supplierMsgOpen, setSupplierMsgOpen] = useState(false);
   const [supplierMsgProduct, setSupplierMsgProduct] = useState<Product | null>(null);
@@ -156,7 +165,11 @@ function ProductsPage() {
   const products = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("*").order("name");
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .is("deleted_at", null)
+        .order("name");
       if (error) throw error;
       return data as Product[];
     },
@@ -373,7 +386,10 @@ function ProductsPage() {
 
   const del = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("products").delete().eq("id", id);
+      const { error } = await supabase
+        .from("products")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -420,6 +436,67 @@ function ProductsPage() {
       setGlobalTxnQty("1");
       setGlobalTxnNotes("");
       setGlobalTxnError(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const parsedImport = useMemo(() => {
+    if (!importOpen || !importText.trim()) return null;
+    const existingSkus = new Set((products.data ?? []).map((x) => x.sku.toLowerCase()));
+    try {
+      return parseProductsCsv(importText, {
+        categories: categories.data ?? [],
+        suppliers: suppliers.data ?? [],
+        existingSkus,
+      });
+    } catch {
+      return null;
+    }
+  }, [importOpen, importText, products.data, categories.data, suppliers.data]);
+
+  const importCsv = useMutation({
+    mutationFn: async (items: ParsedProduct[]) => {
+      if (!profile?.org_id) throw new Error("No organization assigned");
+      // Auto-create any new category names
+      const existingCats = (categories.data ?? []).map((c) => c.name.toLowerCase());
+      const newCatNames = [
+        ...new Set(
+          items
+            .map((i) => i.category_name)
+            .filter((n): n is string => !!n && !existingCats.includes(n.toLowerCase())),
+        ),
+      ];
+      if (newCatNames.length) {
+        const { error } = await supabase
+          .from("categories")
+          .insert(newCatNames.map((name) => ({ name, org_id: profile.org_id! })));
+        if (error) throw new Error(`Creating categories failed: ${error.message}`);
+      }
+      const [{ data: catList }, { data: supList }] = await Promise.all([
+        supabase.from("categories").select("*"),
+        supabase.from("suppliers").select("*"),
+      ]);
+      const payload = items.map((it) => ({
+        name: it.name,
+        sku: it.sku,
+        category_id: resolveRefIds(it.category_name, catList ?? []),
+        supplier_id: resolveRefIds(it.supplier_name, supList ?? []),
+        unit_price: it.unit_price,
+        quantity: it.quantity,
+        reorder_threshold: it.reorder_threshold,
+        description: it.description,
+        org_id: profile.org_id!,
+      }));
+      const { error } = await supabase.from("products").insert(payload);
+      if (error) throw new Error(error.message);
+      return payload.length;
+    },
+    onSuccess: (count) => {
+      toast.success(`Imported ${count} product${count === 1 ? "" : "s"}`);
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["categories"] });
+      setImportOpen(false);
+      setImportText("");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -511,6 +588,108 @@ function ProductsPage() {
             >
               <ArrowLeftRight className="h-4 w-4 mr-1" /> Quick transaction
             </Button>
+            <Dialog
+              open={importOpen}
+              onOpenChange={(v) => {
+                setImportOpen(v);
+                if (!v) setImportText("");
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button variant="outline" className="flex-1 sm:flex-none">
+                  <Upload className="h-4 w-4 mr-1" /> Import CSV
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Import products from CSV</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const blob = new Blob([buildProductTemplate()], { type: "text/csv" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = "products-template.csv";
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                    >
+                      Download template
+                    </Button>
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        accept=".csv,text/csv,text/plain"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (!f) return;
+                          const reader = new FileReader();
+                          reader.onload = () => setImportText(String(reader.result ?? ""));
+                          reader.readAsText(f);
+                          e.target.value = "";
+                        }}
+                      />
+                      <span className="inline-flex h-8 items-center justify-center rounded-md border px-3 text-xs font-medium hover:bg-accent">
+                        Choose file…
+                      </span>
+                    </label>
+                  </div>
+                  <Textarea
+                    rows={6}
+                    placeholder={
+                      'Or paste CSV here…\nname,sku,category,supplier,unit_price,quantity,reorder_threshold,description\n"Milk 1L","MILK-001","Dairy","",28.5,60,12,""'
+                    }
+                    value={importText}
+                    onChange={(e) => setImportText(e.target.value)}
+                  />
+                  {parsedImport && (
+                    <div className="rounded-md border p-3 text-sm space-y-2">
+                      <div>
+                        Ready to import:{" "}
+                        <span className="font-semibold">{parsedImport.items.length}</span> of{" "}
+                        {parsedImport.totalDataRows} rows
+                      </div>
+                      {parsedImport.errors.length > 0 && (
+                        <div className="text-destructive">
+                          <div className="font-medium">
+                            {parsedImport.errors.length} row(s) will be skipped:
+                          </div>
+                          <ul className="list-disc pl-5 max-h-32 overflow-y-auto text-xs mt-1">
+                            {parsedImport.errors.slice(0, 20).map((er, i) => (
+                              <li key={i}>
+                                Row {er.row}: {er.message}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setImportOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    disabled={
+                      importCsv.isPending || !parsedImport || parsedImport.items.length === 0
+                    }
+                    onClick={() => parsedImport && importCsv.mutate(parsedImport.items)}
+                  >
+                    {importCsv.isPending
+                      ? "Importing…"
+                      : `Import ${parsedImport?.items.length ?? 0} product${parsedImport?.items.length === 1 ? "" : "s"}`}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
                 <Button onClick={openNew} className="flex-1 sm:flex-none">

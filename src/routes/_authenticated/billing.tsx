@@ -31,7 +31,7 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Toast, Toaster } from "sonner";
+import { Toaster } from "sonner";
 import {
   Plus,
   Minus,
@@ -313,7 +313,11 @@ function BillingPage() {
   const products = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("*").order("name");
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .is("deleted_at", null)
+        .order("name");
       if (error) throw error;
       return data as Product[];
     },
@@ -551,16 +555,16 @@ function BillingPage() {
           onClose={() => setShowHistory(false)}
         />
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
+        <div className="grid gap-4 lg:grid-cols-[1fr_380px] lg:h-[calc(100dvh-9rem)]">
           {/* Left: Product selection + Cart */}
-          <Card className="flex flex-col">
+          <Card className="flex min-h-0 flex-col overflow-hidden">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2">
                 <Search className="h-4 w-4" /> Products
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col overflow-hidden p-0">
-              <div className="p-3 border-b">
+              <div className="shrink-0 border-b p-3">
                 <Input
                   ref={searchRef}
                   placeholder="Search product by name or SKU…"
@@ -617,7 +621,7 @@ function BillingPage() {
           </Card>
 
           {/* Right: Cart + Customer + Payment */}
-          <Card className="flex flex-col">
+          <Card className="flex min-h-0 flex-col overflow-hidden">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2">
                 <Receipt className="h-4 w-4" /> Cart ({cart.length})
@@ -625,7 +629,7 @@ function BillingPage() {
             </CardHeader>
             <CardContent className="flex-1 flex flex-col overflow-hidden p-0">
               {/* Cart items */}
-              <div className="flex-1 overflow-y-auto p-3 border-b">
+              <div className="min-h-0 flex-1 overflow-y-auto border-b p-3">
                 {cart.length === 0 ? (
                   <p className="text-center text-sm text-muted-foreground py-8">
                     Cart is empty. Search and click products to add.
@@ -683,8 +687,8 @@ function BillingPage() {
               </div>
 
               {/* Totals + Customer + Payment */}
-              <div className="p-3 space-y-4 border-b">
-                <div className="space-y-2 text-sm">
+              <div className="shrink-0 space-y-2 border-b p-2">
+                <div className="space-y-1 text-xs sm:text-sm">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
                     <span>{formatINR(subtotal)}</span>
@@ -698,7 +702,7 @@ function BillingPage() {
                       step="0.01"
                       value={discountAmount}
                       onChange={(e) => setDiscountAmount(e.target.value)}
-                      className="w-28 text-right"
+                      className="h-8 w-24 text-right"
                     />
                   </div>
                   <div className="flex justify-between">
@@ -710,17 +714,17 @@ function BillingPage() {
                       step="0.01"
                       value={taxAmount}
                       onChange={(e) => setTaxAmount(e.target.value)}
-                      className="w-28 text-right"
+                      className="h-8 w-24 text-right"
                     />
                   </div>
-                  <div className="flex justify-between border-t pt-2 font-semibold text-lg">
+                  <div className="flex justify-between border-t pt-1 text-base font-semibold">
                     <span>Total</span>
                     <span>{formatINR(total)}</span>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Customer (optional)</Label>
+                <div className="space-y-1">
+                  <Label className="text-xs">Customer (optional)</Label>
                   <div className="grid gap-2 sm:grid-cols-2">
                     <Input
                       placeholder="Name"
@@ -743,8 +747,11 @@ function BillingPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Payment Method</Label>
-                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <Label className="text-xs">Payment Method</Label>
+                  <Select
+                    value={paymentMethod}
+                    onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -762,13 +769,13 @@ function BillingPage() {
 
                   {/* UPI QR Code Display */}
                   {paymentMethod === "upi" && (
-                    <div className="space-y-3 p-3 bg-muted/50 rounded-lg border">
+                    <div className="space-y-2 rounded-lg border bg-muted/30 p-2">
                       <div className="flex items-center gap-2 text-sm font-medium">
                         <QrCode className="h-4 w-4" />
                         <span>Scan to Pay via UPI</span>
                       </div>
                       <div className="flex justify-center">
-                        <div className="w-48 h-48 bg-white p-4 rounded-lg border shadow-inner flex items-center justify-center">
+                        <div className="flex h-28 w-28 items-center justify-center rounded-lg border bg-white p-2 shadow-inner">
                           {/* Demo QR Code - replace with real UPI QR generation */}
                           <svg
                             viewBox="0 0 100 100"
@@ -822,9 +829,7 @@ function BillingPage() {
                           </svg>
                         </div>
                       </div>
-                      <p className="text-xs text-muted-foreground text-center">
-                        Demo QR — Replace with real UPI QR generation (upi://pay?pa=...)
-                      </p>
+
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
@@ -857,7 +862,7 @@ function BillingPage() {
 
                   {/* Card/Other Payment */}
                   {(paymentMethod === "card" || paymentMethod === "other") && (
-                    <div className="space-y-2 p-3 bg-muted/50 rounded-lg border">
+                    <div className="space-y-2 rounded-lg border bg-muted/30 p-2">
                       <div className="flex items-center gap-2 text-sm font-medium">
                         {paymentMethod === "card" ? (
                           <CreditCard className="h-4 w-4" />
@@ -867,7 +872,7 @@ function BillingPage() {
                         <span>{paymentMethod === "card" ? "Card Payment" : "Other Payment"}</span>
                       </div>
                       <p className="text-sm">
-                        Amount: <span className="font-semibold text-lg">{formatINR(total)}</span>
+                        Amount: <span className="text-base font-semibold">{formatINR(total)}</span>
                       </p>
                       <Button
                         variant="default"
@@ -963,7 +968,7 @@ function BillingPage() {
               </div>
 
               {/* Create Bill Button */}
-              <div className="p-3 border-t">
+              <div className="shrink-0 border-t p-3">
                 <Button
                   className="w-full justify-center gap-2"
                   size="lg"
@@ -1002,8 +1007,6 @@ function BillingPage() {
           </Card>
         </div>
       )}
-
-      <Toaster position="top-right" />
 
       {/* Payment Modal */}
       {paymentModal && (

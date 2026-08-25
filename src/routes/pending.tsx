@@ -12,7 +12,7 @@ export const Route = createFileRoute("/pending")({
   ssr: false,
   beforeLoad: async () => {
     const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/auth" });
+    if (!data.user) throw redirect({ to: "/auth", search: { invite: undefined } });
   },
   head: () => ({
     meta: [
@@ -73,7 +73,7 @@ function PendingPage() {
           icon: <CheckCircle2 className="h-4 w-4" />,
         });
         localStorage.setItem("stockline:justApproved", "1");
-        window.setTimeout(() => navigate({ to: "/dashboard", replace: true }), 1200);
+        window.setTimeout(() => navigate({ to: "/billing", replace: true }), 1200);
       } else if (current === "rejected") {
         toast.error("Your account request was declined", {
           icon: <XCircle className="h-4 w-4" />,
@@ -103,7 +103,7 @@ function PendingPage() {
             icon: <CheckCircle2 className="h-4 w-4" />,
           },
         );
-        window.setTimeout(() => navigate({ to: "/dashboard", replace: true }), 1200);
+        window.setTimeout(() => navigate({ to: "/billing", replace: true }), 1200);
       } else if (current === "rejected") {
         toast.error("Your organization request was declined", {
           icon: <XCircle className="h-4 w-4" />,
@@ -116,14 +116,14 @@ function PendingPage() {
   // Skip pending screen entirely for users already approved on first load.
   useEffect(() => {
     if (profile?.status === "approved" && !prevStatus.current) {
-      navigate({ to: "/dashboard", replace: true });
+      navigate({ to: "/billing", replace: true });
     }
   }, [profile?.status, navigate]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
     toast.success("Signed out");
-    navigate({ to: "/auth", replace: true });
+    navigate({ to: "/auth", search: { invite: undefined }, replace: true });
   };
 
   const isRejected = profile?.status === "rejected";
