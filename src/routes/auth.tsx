@@ -395,18 +395,6 @@ function AuthPage() {
             </CardContent>
           </Card>
         </Reveal>
-        <div className="px-4 py-2.5 rounded-full bg-background/80 border border-border shadow-sm text-xs text-muted-foreground flex items-center gap-1.5">
-          <span>Powered by</span>
-          <span className="font-medium text-foreground">©</span>
-          <a
-            href="https://zerotheorys.lovable.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-primary hover:text-primary/80 transition-colors"
-          >
-            ZeroTheorys
-          </a>
-        </div>
       </div>
     </div>
   );

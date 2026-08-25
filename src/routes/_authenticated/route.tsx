@@ -185,7 +185,7 @@ function LayoutShell() {
   };
 
   return (
-    <div className="min-h-screen flex w-full bg-muted/20">
+    <div className="min-h-screen flex w-full bg-muted/20 pt-safe">
       <Sidebar collapsible="icon">
         <SidebarHeader className="border-b">
           <Link to={homePath} className="flex items-center gap-2 px-2 py-2">
@@ -250,17 +250,6 @@ function LayoutShell() {
             <LogOut className="h-4 w-4" />
             <span className="group-data-[collapsible=icon]:hidden">Sign out</span>
           </Button>
-          <div className="px-2 py-1 text-[10px] text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden">
-            Powered by ©{" "}
-            <a
-              href="https://zerotheorys.lovable.app/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-sidebar-foreground"
-            >
-              ZeroTheorys
-            </a>
-          </div>
         </SidebarFooter>
       </Sidebar>
       <div className="flex-1 flex flex-col min-w-0">
@@ -270,7 +259,7 @@ function LayoutShell() {
             {navItems.find((n) => n.url === pathname)?.title ?? "StockLine"}
           </h1>
         </header>
-        <main className="flex-1 p-3 sm:p-4 md:p-6">
+        <main className="flex-1 p-3 pb-safe-nav sm:p-4 sm:pb-4 md:p-6 md:pb-6">
           <Outlet />
         </main>
       </div>

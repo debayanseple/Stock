@@ -310,6 +310,14 @@ function BillingPage() {
   const [completedBill, setCompletedBill] = useState<{ billId: string; bill: Bill } | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
+  // Autofocus the search field on desktop only — on phones it would pop the
+  // keyboard over the product grid immediately.
+  useEffect(() => {
+    if (window.matchMedia("(min-width: 640px)").matches) {
+      searchRef.current?.focus();
+    }
+  }, []);
+
   const products = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
@@ -570,8 +578,7 @@ function BillingPage() {
                   placeholder="Search product by name or SKU…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full"
-                  autoFocus
+                  className="h-11 w-full sm:h-9"
                 />
               </div>
 
@@ -651,21 +658,23 @@ function BillingPage() {
                           <Button
                             variant="outline"
                             size="icon"
+                            className="h-10 w-10 rounded-lg sm:h-9 sm:w-9"
                             onClick={() => updateQuantity(item.product.id, -1)}
                             disabled={item.quantity <= 1}
                             aria-label="Decrease quantity"
                           >
-                            <Minus className="h-3 w-3" />
+                            <Minus className="h-4 w-4" />
                           </Button>
                           <span className="w-8 text-center font-mono">{item.quantity}</span>
                           <Button
                             variant="outline"
                             size="icon"
+                            className="h-10 w-10 rounded-lg sm:h-9 sm:w-9"
                             onClick={() => updateQuantity(item.product.id, 1)}
                             disabled={item.quantity >= item.product.quantity}
                             aria-label="Increase quantity"
                           >
-                            <Plus className="h-3 w-3" />
+                            <Plus className="h-4 w-4" />
                           </Button>
                         </div>
                         <div className="shrink-0 font-medium tabular-nums w-24 text-right">
@@ -676,7 +685,7 @@ function BillingPage() {
                           size="icon"
                           onClick={() => removeFromCart(item.product.id)}
                           aria-label="Remove item"
-                          className="text-destructive hover:text-destructive"
+                          className="h-10 w-10 text-destructive hover:text-destructive sm:h-9 sm:w-9"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

@@ -1,11 +1,11 @@
 {
-  "name": "StockLine — Inventory & Stock Management",
+  "name": "StockLine \u2014 Inventory & Stock Management",
   "short_name": "StockLine",
   "description": "Manage products, categories, suppliers, and stock movements with a clean inventory portal.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F1EFE8",
-  "theme_color": "#0F6E56",
+  "background_color": "#FAFAFA",
+  "theme_color": "#0F172A",
   "orientation": "portrait-primary",
   "icons": [
     {
