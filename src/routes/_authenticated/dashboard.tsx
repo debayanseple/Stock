@@ -61,6 +61,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { PullToRefresh } from "@/components/pull-to-refresh";
+import { Reveal } from "@/components/reveal";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -347,7 +348,7 @@ function Dashboard() {
     .sort((a, b) => b.value - a.value);
   const pieColors = [
     "var(--primary)",
-    "var(--accent-brand)",
+    "var(--chart-3)",
     "var(--success)",
     "var(--warning)",
     "var(--primary-glow)",
@@ -387,7 +388,7 @@ function Dashboard() {
       <div className="space-y-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold">Overview</h2>
+            <h2 className="font-display text-xl">Overview</h2>
             <p className="text-xs text-muted-foreground">
               Insights across your inventory and movements.
             </p>
@@ -415,28 +416,30 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            label="Total products"
-            value={totalProducts}
-            icon={Package}
-            onClick={() => navigate({ to: "/products" })}
-          />
-          <StatCard
-            label="Total stock value"
-            value={formatINR(totalValue)}
-            icon={IndianRupee}
-            onClick={() => navigate({ to: "/products" })}
-          />
-          <StatCard
-            label="Low / out of stock"
-            value={lowStock.length}
-            icon={AlertTriangle}
-            tone="warn"
-            onClick={() => setLowOpen(true)}
-            badge={lowStock.length > 0 ? "View" : undefined}
-          />
-        </div>
+        <Reveal>
+          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              label="Total products"
+              value={totalProducts}
+              icon={Package}
+              onClick={() => navigate({ to: "/products" })}
+            />
+            <StatCard
+              label="Total stock value"
+              value={formatINR(totalValue)}
+              icon={IndianRupee}
+              onClick={() => navigate({ to: "/products" })}
+            />
+            <StatCard
+              label="Low / out of stock"
+              value={lowStock.length}
+              icon={AlertTriangle}
+              tone="warn"
+              onClick={() => setLowOpen(true)}
+              badge={lowStock.length > 0 ? "View" : undefined}
+            />
+          </div>
+        </Reveal>
 
         {/* Sales summary */}
         <div>
@@ -876,7 +879,7 @@ function StatCard({
     <CardContent className="p-4 sm:p-5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="text-[10px] sm:text-xs uppercase tracking-wide text-muted-foreground">
+          <div className="font-mono text-[10px] sm:text-xs uppercase tracking-[0.12em] text-muted-foreground">
             {label}
           </div>
           <div className="text-xl sm:text-2xl font-semibold mt-1 break-words leading-tight">

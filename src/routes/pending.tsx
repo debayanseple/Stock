@@ -7,6 +7,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { Clock, LogOut, RefreshCw, CheckCircle2, XCircle, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
+import { Reveal } from "@/components/reveal";
 
 export const Route = createFileRoute("/pending")({
   ssr: false,
@@ -130,42 +131,44 @@ function PendingPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center space-y-4 pt-8">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Clock className="h-7 w-7" />
-          </div>
-          <div className="space-y-2">
-            <CardTitle className="text-2xl">
-              {isRejected ? "Access denied" : "Awaiting approval"}
-            </CardTitle>
-            <CardDescription>
-              {isRejected
-                ? "Your account request was declined. Please contact your administrator for details."
-                : "Your account is pending approval by an administrator. You'll get access once it's approved."}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3 pb-8">
-          {!isRejected && (
-            <Button
-              onClick={() => {
-                refetch();
-                refetchOrg();
-              }}
-              disabled={isFetching}
-              className="w-full"
-              variant="outline"
-            >
-              <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
-              Check status
+      <Reveal className="w-full max-w-md">
+        <Card className="w-full">
+          <CardHeader className="text-center space-y-4 pt-8">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl gradient-bg text-primary-foreground shadow-accent">
+              <Clock className="h-7 w-7" />
+            </div>
+            <div className="space-y-2">
+              <CardTitle className="font-display text-2xl font-normal">
+                {isRejected ? "Access denied" : "Awaiting approval"}
+              </CardTitle>
+              <CardDescription>
+                {isRejected
+                  ? "Your account request was declined. Please contact your administrator for details."
+                  : "Your account is pending approval by an administrator. You'll get access once it's approved."}
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3 pb-8">
+            {!isRejected && (
+              <Button
+                onClick={() => {
+                  refetch();
+                  refetchOrg();
+                }}
+                disabled={isFetching}
+                className="w-full"
+                variant="outline"
+              >
+                <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+                Check status
+              </Button>
+            )}
+            <Button onClick={signOut} variant="ghost" className="w-full">
+              <LogOut className="h-4 w-4" /> Sign out
             </Button>
-          )}
-          <Button onClick={signOut} variant="ghost" className="w-full">
-            <LogOut className="h-4 w-4" /> Sign out
-          </Button>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Reveal>
     </div>
   );
 }
