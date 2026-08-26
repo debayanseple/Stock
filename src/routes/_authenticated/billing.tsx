@@ -48,6 +48,7 @@ import {
   CheckCircle,
   Loader2,
   AlertCircle,
+  ScanLine,
 } from "lucide-react";
 import {
   formatINR,
@@ -57,6 +58,7 @@ import {
   type PaymentMethod,
 } from "@/lib/inventory-types";
 import { useProfile } from "@/hooks/use-profile";
+import { BarcodeScanner } from "@/components/barcode-scanner";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/billing")({
@@ -296,6 +298,12 @@ function BillingPage() {
   const [historyBills, setHistoryBills] = useState<Bill[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
+  // Barcode scanning
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [manualCode, setManualCode] = useState("");
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  const hasCamera = typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
+
   // Payment modal state
   const [paymentModal, setPaymentModal] = useState<{
     open: boolean;
@@ -489,6 +497,42 @@ function BillingPage() {
     setSearch("");
   };
 
+  // Exact, case-insensitive SKU match over the already-loaded product list.
+  const findProductByCode = (code: string): Product | undefined =>
+    products.data?.find((p) => p.sku.toLowerCase() === code.toLowerCase().trim());
+
+  const flashAdded = (productId: string) => {
+    setHighlightId(productId);
+    window.setTimeout(() => setHighlightId((cur) => (cur === productId ? null : cur)), 800);
+  };
+
+  // Shared by camera scan + manual item-ID entry.
+  const handleCodeDetected = (code: string) => {
+    if (!products.data) {
+      toast.info("Products are still loading — try again in a moment");
+      return;
+    }
+    const product = findProductByCode(code);
+    if (!product) {
+      toast.error(`No product with ID "${code}"`);
+      return;
+    }
+    if (product.quantity <= 0) {
+      toast.error(`${product.name} is out of stock`);
+      return;
+    }
+    addToCart(product); // re-scan increments qty; stock cap enforced inside
+    flashAdded(product.id);
+  };
+
+  const submitManualCode = (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = manualCode.trim();
+    if (!code) return;
+    handleCodeDetected(code);
+    setManualCode("");
+  };
+
   const updateQuantity = (productId: string, delta: number) => {
     setCart((prev) =>
       prev
@@ -572,14 +616,47 @@ function BillingPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col overflow-hidden p-0">
-              <div className="shrink-0 border-b p-3">
-                <Input
-                  ref={searchRef}
-                  placeholder="Search product by name or SKU…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="h-11 w-full sm:h-9"
-                />
+              <div className="shrink-0 space-y-2 border-b p-3">
+                <div className="flex gap-2">
+                  {hasCamera && (
+                    <Button
+                      onClick={() => setScannerOpen(true)}
+                      className="h-11 shrink-0 sm:h-9"
+                      aria-label="Scan barcode"
+                    >
+                      <ScanLine className="h-4 w-4 sm:mr-1" />
+                      <span className="hidden sm:inline">Scan</span>
+                    </Button>
+                  )}
+                  <Input
+                    ref={searchRef}
+                    placeholder="Search product by name or SKU…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="h-11 min-w-0 flex-1 sm:h-9"
+                  />
+                </div>
+                <form onSubmit={submitManualCode} className="flex gap-2">
+                  <Input
+                    value={manualCode}
+                    onChange={(e) => setManualCode(e.target.value)}
+                    placeholder="Or type / paste item ID (barcode)…"
+                    inputMode="text"
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    className="h-11 min-w-0 flex-1 sm:h-9"
+                  />
+                  <Button
+                    type="submit"
+                    variant="outline"
+                    className="h-11 shrink-0 sm:h-9"
+                    disabled={!manualCode.trim()}
+                  >
+                    <Plus className="h-4 w-4 sm:mr-1" />
+                    <span className="sm:inline">Add</span>
+                  </Button>
+                </form>
               </div>
 
               <div className="flex-1 overflow-y-auto p-3">
@@ -646,7 +723,11 @@ function BillingPage() {
                     {cart.map((item) => (
                       <div
                         key={item.product.id}
-                        className="flex items-center gap-2 p-2 border rounded-lg bg-muted/30"
+                        className={`flex items-center gap-2 rounded-lg border p-2 transition-colors duration-300 ${
+                          highlightId === item.product.id
+                            ? "border-primary bg-primary/10"
+                            : "border-transparent bg-muted/30"
+                        }`}
                       >
                         <div className="flex-1 min-w-0">
                           <div className="font-medium truncate">{item.product.name}</div>
@@ -1015,6 +1096,17 @@ function BillingPage() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Barcode scanner — stays open for back-to-back scans (continuous mode) */}
+      {!showHistory && (
+        <BarcodeScanner
+          open={scannerOpen}
+          onOpenChange={setScannerOpen}
+          onDetected={handleCodeDetected}
+          continuous
+          overlayLabel={`${cart.reduce((n, i) => n + i.quantity, 0)} items · ${formatINR(total)}`}
+        />
       )}
 
       {/* Payment Modal */}
