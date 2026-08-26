@@ -1,93 +1,57 @@
-<!-- LOVABLE:BEGIN -->
-
-> [!IMPORTANT]
-> This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
-> published git history — force pushing, or rebasing/amending/squashing commits
-> that are already pushed — as it rewrites history on Lovable's side and the
-> user will likely lose their project history.
->
-> Commits you push to the connected branch sync back to Lovable and show up in
-> the editor, so keep the branch in a working state.
-
-<!-- LOVABLE:END -->
-
 ## Project Overview
 
 - **Framework**: TanStack Start (React 19) with SSR
 - **Router**: TanStack Router (file-based, `src/routes/`)
 - **Auth/DB**: Supabase (JWT auth + Postgres)
-- **Styling**: Tailwind CSS v4 + Radix UI primitives
-- **State**: TanStack Query (server state), React context (router context)
-- **Build**: Vite with `@lovable.dev/vite-tanstack-config` (wraps TanStack Start, Nitro, React, Tailwind, tsConfigPaths)
-- **Target**: Cloudflare (via Nitro) by default
+- **Styling**: Tailwind CSS v4 + Radix UI primitives (shadcn-style in `src/components/ui/`)
+- **State**: TanStack Query (server state)
+- **Build**: Vite via `@lovable.dev/vite-tanstack-config` wrapper; Nitro bundles for Cloudflare target by default
 
 ## Key Commands
 
 ```bash
-npm run dev        # Start dev server (Vite)
-npm run build      # Production build (Vite + Nitro)
-npm run build:dev  # Dev-mode build
+npm run dev        # Dev server (also regenerates routeTree.gen.ts)
+npm run lint       # ESLint incl. Prettier checks (the only static check)
+npm run build      # Production build (Vite + Nitro) — catches type errors
 npm run preview    # Preview production build
-npm run lint       # ESLint (includes Prettier via plugin)
-npm run format     # Prettier write
 ```
 
-**Order matters**: `lint -> build` (lint catches type errors Prettier won't)
+- **No test framework and no `typecheck` script exist.** Verification = `lint` then `build`, in that order (lint catches formatting issues, build catches type errors).
+- Never rewrite pushed git history (no force-push/rebase of published commits) — external tooling syncs from this branch.
 
 ## Architecture Notes
 
 ### Entry Points
 
-- `src/start.ts` — TanStack Start config: registers `attachSupabaseAuth` (client functionMiddleware) and `errorMiddleware` (server requestMiddleware). **This is the real app entrypoint.**
-- `src/server.ts` — Nitro/SSR entry (wraps TanStack Start's server entry). Handles catastrophic SSR errors (h3-swallowed 500s) and renders `error-page.tsx`.
-- `src/router.tsx` — Creates router with `routeTree.gen.ts`, configures QueryClient with background refetch for `products`, `categories`, `transactions` (5min interval).
+- `src/start.ts` — real app entrypoint: registers `attachSupabaseAuth` (functionMiddleware) and `errorMiddleware` (requestMiddleware).
+- `src/server.ts` — Nitro/SSR entry, wired via `vite.config.ts` (`tanstackStart.server.entry: "server"`). Wraps TanStack's server entry to catch h3-swallowed 500s and render the error page.
+- `src/router.tsx` — router + QueryClient. `BACKGROUND_SYNC_KEYS` here controls queries that refetch every 5 min in background (`products`, `categories`, `transactions`) — update when adding globally-fresh data.
 
 ### Auth Flow
 
-- **Client**: `attachSupabaseAuth` (src/integrations/supabase/auth-attacher.ts) attaches bearer token to all `serverFn` calls.
-- **Server**: `requireSupabaseAuth` (auth-middleware.ts) validates JWT, creates scoped Supabase client, injects `{ supabase, userId, claims }` into function context.
-- **Route guard**: `_authenticated/route.tsx` `beforeLoad` checks session, profile status (`approved`), org status (not `suspended`/`rejected`), and role (`super_admin` → `/admin`).
+- Client → `attachSupabaseAuth` attaches bearer token to all serverFn calls.
+- Server → `requireSupabaseAuth` validates JWT, injects `{ supabase, userId, claims }` into function context.
+- Route guard `_authenticated/route.tsx` `beforeLoad`: session required, profile must be `approved`, org not `suspended`/`rejected`, `super_admin` redirected to `/admin`.
 
 ### Supabase Integration
 
-- Generated clients in `src/integrations/supabase/` — **do not edit directly** (marked auto-generated).
-- `client.ts` — browser client (anon key)
-- `client.server.ts` — server client (service role)
-- `types.ts` — generated DB types
-- Env vars required: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` (validated in `requireSupabaseAuth`)
+- `src/integrations/supabase/` is **auto-generated — do not edit** (`client.ts` browser, `client.server.ts` service-role, `types.ts` DB types). Regenerate types after schema changes.
+- Env vars `SUPABASE_URL` + `SUPABASE_PUBLISHABLE_KEY` are validated at request time in `requireSupabaseAuth`; if missing, every protected call throws.
 
-### Routing
+### Data Access — two patterns coexist
 
-- File-based under `src/routes/`
-- `_authenticated/` — protected layout with sidebar nav
-- `auth.tsx` — login/signup
-- `pending.tsx` — waiting-for-approval screen
-- Route tree generated to `src/routeTree.gen.ts` (do not edit)
+1. **Client-direct**: browser Supabase client guarded by RLS (most route files, `billing.functions.ts`). Multi-step writes go through Postgres RPCs (e.g. `create_bill_with_stock`) defined in `supabase/migrations/`.
+2. **Server functions**: `createServerFn` + `requireSupabaseAuth` middleware (e.g. `invites.functions.ts`) — use for logic that must not ship to the client or needs elevated trust.
 
-### Path Aliases
+Schema changes ship as SQL migration files under `supabase/migrations/` (Supabase CLI config in `supabase/config.toml`).
 
-- `@/*` → `src/*` (configured in tsconfig.json and Vite)
+## Conventions & Gotchas
 
-### Error Handling
-
-- `src/lib/error-capture.ts` — captures last thrown error for SSR error pages
-- `src/lib/error-page.tsx` — HTML error page renderer
-- Both `server.ts` and `start.ts` middleware render this on 500
-
-## Conventions
-
-- **TypeScript**: strict mode, no unused vars/params errors (disabled in eslint), verbatimModuleSyntax off
-- **ESLint**: TS recommended + react-hooks + react-refresh + prettier; forbids `server-only` import
-- **Prettier**: 100 printWidth, semi, double quotes, trailing commas
-- **Components**: Radix UI primitives in `src/components/ui/`, shadcn-style
-- **Server functions**: Use `createServerFn` with `requireSupabaseAuth` middleware for protected endpoints
-
-## Gotchas
-
-1. **Vite config is minimal** — `@lovable.dev/vite-tanstack-config` injects most plugins. Don't manually add TanStack, React, Tailwind, Nitro, etc.
-2. **SSR entry is `src/server.ts`** (not `src/entry-server.tsx`) — configured in `vite.config.ts` `tanstackStart.server.entry: "server"`
-3. **Supabase auth attacher must be `functionMiddleware`** (not `requestMiddleware`) or browser won't send tokens to serverFns
-4. **Route tree is generated** — run `npm run dev` or build to regenerate after adding routes
-5. **No test framework configured** — add Vitest/Playwright if needed
-6. **Nitro uses Cloudflare target by default** — check `.output/` or `.vinxi/` for build artifacts
-7. **Background sync keys** in `router.tsx` — update if adding new globally-fresh queries
+1. **Vite config stays minimal** — the `@lovable.dev/vite-tanstack-config` wrapper already injects TanStack, React, Tailwind, Nitro, tsConfigPaths plugins; adding them again breaks the build.
+2. **Auth attacher must stay `functionMiddleware`** — switching to `requestMiddleware` silently stops tokens being sent to serverFns.
+3. **Generated files**: never hand-edit `src/routeTree.gen.ts` (run dev/build to regenerate) or anything in `src/integrations/supabase/`.
+4. **Routing**: file-based under `src/routes/`; conventions documented in `src/routes/README.md`. Root layout is `__root.tsx` — preserve its `<Outlet />`.
+5. **ESLint forbids `server-only` imports** — TanStack Start isn't Next.js; name server modules `*.server.ts` instead.
+6. **TS config**: strict mode but `noUnusedLocals`/`noUnusedParameters` off; Prettier enforced through ESLint (100 printWidth, double quotes).
+7. **Two lockfiles are tracked** (`bun.lock` + `package-lock.json`) — npm is the active installer; regenerate both consistently if you change dependencies.
+8. **bunfig.toml supply-chain guard**: package versions published <24h ago are rejected on install; new excludes require user confirmation.

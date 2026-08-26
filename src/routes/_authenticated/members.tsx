@@ -31,7 +31,23 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Check, X, Ban, RefreshCw, UserPlus, Copy, Trash2 } from "lucide-react";
+import { Check, RefreshCw, UserPlus, Copy, Trash2, MoreHorizontal, Ban } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useState } from "react";
 
 type AppRole = "admin" | "staff" | "super_admin";
@@ -99,6 +115,7 @@ function MembersPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<AppRole>("staff");
   const [linkForInvite, setLinkForInvite] = useState<string | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<Member | null>(null);
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ["org_members"],
@@ -252,38 +269,6 @@ function MembersPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const setRole = useMutation({
-    mutationFn: async ({
-      userId,
-      current,
-      next,
-    }: {
-      userId: string;
-      current: AppRole[];
-      next: AppRole;
-    }) => {
-      // Remove all non-super_admin roles this user currently has, then insert the chosen one.
-      const toRemove = current.filter((r) => r !== "super_admin");
-      if (toRemove.length > 0) {
-        const { error } = await supabase
-          .from("user_roles")
-          .delete()
-          .eq("user_id", userId)
-          .in("role", toRemove);
-        if (error) throw error;
-      }
-      if (!current.includes(next)) {
-        const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: next });
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      toast.success("Role updated");
-      qc.invalidateQueries({ queryKey: ["org_members"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
   const primaryRole = (roles: AppRole[]): AppRole => {
     if (roles.includes("super_admin")) return "super_admin";
     if (roles.includes("admin")) return "admin";
@@ -292,11 +277,11 @@ function MembersPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Invite and manage the people in your organization (max 1 admin + 1 staff).
         </p>
-        <div className="flex gap-2">
+        <div className="flex gap-2 shrink-0 self-end sm:self-auto">
           <Dialog
             open={inviteOpen}
             onOpenChange={(v) => {
@@ -325,6 +310,7 @@ function MembersPage() {
                       readOnly
                       value={linkForInvite}
                       onFocus={(e) => e.currentTarget.select()}
+                      className="min-w-0 flex-1 text-xs"
                     />
                     <Button
                       type="button"
@@ -415,17 +401,35 @@ function MembersPage() {
             <div className="text-sm font-medium">Pending invites</div>
             <div className="space-y-2">
               {pendingInvites.map((inv) => (
-                <div key={inv.id} className="flex items-center gap-2 flex-wrap text-sm">
-                  <span className="font-medium truncate max-w-[180px]">{inv.email}</span>
-                  <Badge variant="secondary">{inv.role}</Badge>
-                  <span className="text-xs text-muted-foreground">
-                    expires {new Date(inv.expires_at).toLocaleDateString()}
-                  </span>
-                  <div className="ml-auto flex gap-1">
-                    <Button size="sm" variant="outline" onClick={() => copyLink(inv.token)}>
+                <div key={inv.id} className="flex items-center gap-2 text-sm">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium truncate">{inv.email}</div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Badge variant="secondary" className="capitalize">
+                        {inv.role}
+                      </Badge>
+                      <span className="truncate">
+                        expires {new Date(inv.expires_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="h-9 w-9"
+                      aria-label="Copy invite link"
+                      onClick={() => copyLink(inv.token)}
+                    >
                       <Copy className="h-4 w-4" />
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => revokeInvite.mutate(inv.id)}>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="h-9 w-9 hover:text-destructive"
+                      aria-label="Revoke invite"
+                      onClick={() => revokeInvite.mutate(inv.id)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -457,53 +461,54 @@ function MembersPage() {
             const isSuper = m.roles.includes("super_admin");
             return (
               <Card key={m.id}>
-                <CardContent className="p-3 space-y-2">
+                <CardContent className="p-4 space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="font-medium truncate">{m.full_name || "—"}</div>
+                      <div className="font-medium truncate">
+                        {m.full_name || "—"}
+                        {isMe && <span className="ml-1 text-xs text-muted-foreground">(you)</span>}
+                      </div>
                       <div className="text-xs text-muted-foreground truncate">{m.email}</div>
                     </div>
                     {statusBadge(m.status)}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Select
-                      value={role}
-                      disabled={isMe || isSuper || setRole.isPending}
-                      onValueChange={(v) =>
-                        setRole.mutate({ userId: m.id, current: m.roles, next: v as AppRole })
-                      }
-                    >
-                      <SelectTrigger className="h-8 w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="staff">Staff</SelectItem>
-                        {isSuper && <SelectItem value="super_admin">Super admin</SelectItem>}
-                      </SelectContent>
-                    </Select>
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge variant="outline" className="capitalize shrink-0">
+                      {role}
+                    </Badge>
                     {!isMe && !isSuper && (
-                      <div className="ml-auto flex gap-1">
+                      <div className="flex gap-2">
                         {m.status !== "approved" && (
                           <Button
                             size="sm"
                             variant="outline"
+                            className="h-9"
                             onClick={() => setStatus.mutate({ id: m.id, status: "approved" })}
                           >
-                            <Check className="h-4 w-4" />
+                            <Check className="h-4 w-4 mr-1" /> Approve
                           </Button>
                         )}
                         {m.status !== "rejected" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              if (confirm(`Remove ${m.full_name || m.email}?`))
-                                setStatus.mutate({ id: m.id, status: "rejected" });
-                            }}
-                          >
-                            <Ban className="h-4 w-4" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                className="h-9 w-9"
+                                aria-label="More actions"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onSelect={() => setRemoveTarget(m)}
+                              >
+                                <Ban className="h-4 w-4" /> Remove member
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         )}
                       </div>
                     )}
@@ -555,28 +560,15 @@ function MembersPage() {
                       <TableCell className="text-sm">{m.email}</TableCell>
                       <TableCell>{statusBadge(m.status)}</TableCell>
                       <TableCell>
-                        <Select
-                          value={role}
-                          disabled={isMe || isSuper || setRole.isPending}
-                          onValueChange={(v) =>
-                            setRole.mutate({ userId: m.id, current: m.roles, next: v as AppRole })
-                          }
-                        >
-                          <SelectTrigger className="h-8 w-36">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="staff">Staff</SelectItem>
-                            {isSuper && <SelectItem value="super_admin">Super admin</SelectItem>}
-                          </SelectContent>
-                        </Select>
+                        <Badge variant="outline" className="capitalize">
+                          {role}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         {isMe || isSuper ? (
                           <span className="text-xs text-muted-foreground">—</span>
                         ) : (
-                          <div className="inline-flex gap-2">
+                          <div className="inline-flex gap-2 justify-end">
                             {m.status !== "approved" && (
                               <Button
                                 size="sm"
@@ -587,16 +579,26 @@ function MembersPage() {
                               </Button>
                             )}
                             {m.status !== "rejected" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  if (confirm(`Remove ${m.full_name || m.email}?`))
-                                    setStatus.mutate({ id: m.id, status: "rejected" });
-                                }}
-                              >
-                                <X className="h-4 w-4 mr-1" /> Remove
-                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8"
+                                    aria-label="More actions"
+                                  >
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onSelect={() => setRemoveTarget(m)}
+                                  >
+                                    <Ban className="h-4 w-4" /> Remove member
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             )}
                           </div>
                         )}
@@ -609,6 +611,35 @@ function MembersPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <AlertDialog
+        open={!!removeTarget}
+        onOpenChange={(open) => {
+          if (!open) setRemoveTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove member?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {removeTarget &&
+                `${removeTarget.full_name || removeTarget.email} will immediately lose access to this organization. You can undo this later by approving them again.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (removeTarget) setStatus.mutate({ id: removeTarget.id, status: "rejected" });
+                setRemoveTarget(null);
+              }}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
