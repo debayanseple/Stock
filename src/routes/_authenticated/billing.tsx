@@ -817,8 +817,12 @@ function BillingPage() {
                         }`}
                       >
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{item.product.name}</div>
-                          <div className="font-mono text-xs text-muted-foreground">
+                          {/* Wrap to two lines instead of truncating, so long
+                              product names stay readable on a phone. */}
+                          <div className="line-clamp-2 text-sm font-medium leading-tight sm:text-[0.95rem]">
+                            {item.product.name}
+                          </div>
+                          <div className="truncate font-mono text-[11px] text-muted-foreground">
                             {item.product.sku}
                             {item.product.barcode ? ` · ${item.product.barcode}` : ""}
                           </div>
@@ -846,7 +850,7 @@ function BillingPage() {
                             <Plus className="h-4 w-4" />
                           </Button>
                         </div>
-                        <div className="shrink-0 font-medium tabular-nums w-24 text-right">
+                        <div className="shrink-0 text-right font-medium tabular-nums w-20 text-xs sm:w-24 sm:text-sm">
                           {formatINR(item.product.unit_price * item.quantity)}
                         </div>
                         <Button
