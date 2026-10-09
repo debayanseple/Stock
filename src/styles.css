@@ -204,6 +204,37 @@
   bottom: calc(4.25rem + env(safe-area-inset-bottom));
 }
 
+/* ---- Shimmer skeletons ---- */
+/* Sweeping highlight, so loading state reads as "working" not "broken". */
+@keyframes shimmer-sweep {
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.shimmer {
+  background-image: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    color-mix(in oklab, var(--primary) 14%, var(--muted)) 50%,
+    var(--muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-sweep 1.5s linear infinite;
+}
+
+/* Keep the plate static under the sweep so text laid over it stays legible. */
+.shimmer-plate {
+  background-color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer {
+    animation: none;
+    background-position: 50% 0;
+  }
+}
+
 /* ---- Signature gradient helpers ---- */
 
 .gradient-text {
@@ -244,6 +275,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .shimmer,
   .animate-float,
   .animate-float-delayed,
   .animate-spin-slower,

@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemo, useRef, useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import { Bar, CardSkeleton } from "@/components/skeletons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1030,7 +1032,11 @@ function ProductsPage() {
       {/* Mobile card list */}
       <div className="grid gap-3 sm:hidden">
         {products.isLoading ? (
-          <p className="text-center text-sm text-muted-foreground py-6">Loading…</p>
+          <>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <CardSkeleton key={i} rows={3} />
+            ))}
+          </>
         ) : filtered.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground py-6">
             No products match your filters.
@@ -1143,11 +1149,22 @@ function ProductsPage() {
             </TableHeader>
             <TableBody>
               {products.isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground">
-                    Loading…
-                  </TableCell>
-                </TableRow>
+                <>
+                  {Array.from({ length: 6 }).map((_, r) => (
+                    <TableRow key={r}>
+                      {Array.from({ length: 8 }).map((_, c) => (
+                        <TableCell key={c}>
+                          <Bar
+                            className={cn(
+                              "h-3.5",
+                              c === 0 ? "w-36" : c === 1 || c === 2 ? "w-20" : "w-16",
+                            )}
+                          />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </>
               ) : filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center text-muted-foreground">

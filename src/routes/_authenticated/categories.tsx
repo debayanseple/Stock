@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Bar, CardSkeleton } from "@/components/skeletons";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { Category } from "@/lib/inventory-types";
@@ -164,7 +166,11 @@ function CategoriesPage() {
       {/* Mobile card list — the table needs horizontal scrolling on a phone */}
       <div className="grid gap-3 sm:hidden">
         {isLoading ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">Loading…</p>
+          <>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <CardSkeleton key={i} />
+            ))}
+          </>
         ) : data.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">No categories yet.</p>
         ) : (
@@ -217,11 +223,17 @@ function CategoriesPage() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
-                    Loading…
-                  </TableCell>
-                </TableRow>
+                <>
+                  {Array.from({ length: 5 }).map((_, r) => (
+                    <TableRow key={r}>
+                      {Array.from({ length: 3 }).map((_, c) => (
+                        <TableCell key={c}>
+                          <Bar className={cn("h-3.5", c === 0 ? "w-32" : "w-20")} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </>
               ) : data.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center text-muted-foreground">

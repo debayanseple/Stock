@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Bar, CardSkeleton } from "@/components/skeletons";
+import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -80,11 +82,7 @@ function TransactionsPage() {
       {/* Mobile card list */}
       <div className="sm:hidden space-y-2">
         {isLoading ? (
-          <Card>
-            <CardContent className="p-4 text-center text-sm text-muted-foreground">
-              Loading…
-            </CardContent>
-          </Card>
+          <CardSkeleton />
         ) : data.length === 0 ? (
           <Card>
             <CardContent className="p-4 text-center text-sm text-muted-foreground">
@@ -144,11 +142,17 @@ function TransactionsPage() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    Loading…
-                  </TableCell>
-                </TableRow>
+                <>
+                  {Array.from({ length: 5 }).map((_, r) => (
+                    <TableRow key={r}>
+                      {Array.from({ length: 6 }).map((_, c) => (
+                        <TableCell key={c}>
+                          <Bar className={cn("h-3.5", c === 0 ? "w-32" : "w-20")} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </>
               ) : data.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-muted-foreground">

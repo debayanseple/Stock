@@ -1,6 +1,8 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+import { Bar, CardSkeleton } from "@/components/skeletons";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -456,11 +458,11 @@ function MembersPage() {
       {/* Mobile cards */}
       <div className="sm:hidden space-y-2">
         {isLoading ? (
-          <Card>
-            <CardContent className="p-4 text-center text-sm text-muted-foreground">
-              Loading…
-            </CardContent>
-          </Card>
+          <>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <CardSkeleton key={i} />
+            ))}
+          </>
         ) : activeMembers.length === 0 ? (
           <Card>
             <CardContent className="p-4 text-center text-sm text-muted-foreground">
@@ -548,11 +550,17 @@ function MembersPage() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    Loading…
-                  </TableCell>
-                </TableRow>
+                <>
+                  {Array.from({ length: 5 }).map((_, r) => (
+                    <TableRow key={r}>
+                      {Array.from({ length: 5 }).map((_, c) => (
+                        <TableCell key={c}>
+                          <Bar className={cn("h-3.5", c === 0 ? "w-32" : "w-20")} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </>
               ) : activeMembers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-muted-foreground">

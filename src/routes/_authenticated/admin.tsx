@@ -35,6 +35,7 @@ import {
   Ban,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Bar as SkelBar, PanelSkeleton, TableSkeleton } from "@/components/skeletons";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -152,6 +153,8 @@ function AdminPageInner() {
       return data ?? [];
     },
   });
+
+  const loading = orgs.isLoading || profiles.isLoading || roleRows.isLoading;
 
   const rolesByUser = useMemo(() => {
     const m = new Map<string, string[]>();
@@ -314,341 +317,393 @@ function AdminPageInner() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard
-          icon={<Building2 className="h-4 w-4" />}
-          label="Organizations"
-          value={stats.totalOrgs}
-        />
-        <StatCard
-          icon={<Clock className="h-4 w-4" />}
-          label="Pending orgs"
-          value={stats.pendingOrgs}
-          tone="warning"
-        />
-        <StatCard
-          icon={<CheckCircle2 className="h-4 w-4" />}
-          label="Approved orgs"
-          value={stats.approvedOrgs}
-          tone="success"
-        />
-        <StatCard
-          icon={<XCircle className="h-4 w-4" />}
-          label="Rejected orgs"
-          value={stats.rejectedOrgs}
-          tone="danger"
-        />
-        <StatCard
-          icon={<Users className="h-4 w-4" />}
-          label="Total users"
-          value={stats.totalUsers}
-        />
-        <StatCard
-          icon={<Clock className="h-4 w-4" />}
-          label="Pending users"
-          value={stats.pendingUsers}
-          tone="warning"
-        />
-        <StatCard
-          icon={<CheckCircle2 className="h-4 w-4" />}
-          label="Approved users"
-          value={stats.approvedUsers}
-          tone="success"
-        />
-        <StatCard
-          icon={<TrendingUp className="h-4 w-4" />}
-          label="Avg users / org"
-          value={stats.approvedOrgs ? (stats.approvedUsers / stats.approvedOrgs).toFixed(1) : "0"}
-        />
-      </div>
+      {loading ? (
+        <AdminSkeleton />
+      ) : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <StatCard
+              icon={<Building2 className="h-4 w-4" />}
+              label="Organizations"
+              value={stats.totalOrgs}
+            />
+            <StatCard
+              icon={<Clock className="h-4 w-4" />}
+              label="Pending orgs"
+              value={stats.pendingOrgs}
+              tone="warning"
+            />
+            <StatCard
+              icon={<CheckCircle2 className="h-4 w-4" />}
+              label="Approved orgs"
+              value={stats.approvedOrgs}
+              tone="success"
+            />
+            <StatCard
+              icon={<XCircle className="h-4 w-4" />}
+              label="Rejected orgs"
+              value={stats.rejectedOrgs}
+              tone="danger"
+            />
+            <StatCard
+              icon={<Users className="h-4 w-4" />}
+              label="Total users"
+              value={stats.totalUsers}
+            />
+            <StatCard
+              icon={<Clock className="h-4 w-4" />}
+              label="Pending users"
+              value={stats.pendingUsers}
+              tone="warning"
+            />
+            <StatCard
+              icon={<CheckCircle2 className="h-4 w-4" />}
+              label="Approved users"
+              value={stats.approvedUsers}
+              tone="success"
+            />
+            <StatCard
+              icon={<TrendingUp className="h-4 w-4" />}
+              label="Avg users / org"
+              value={
+                stats.approvedOrgs ? (stats.approvedUsers / stats.approvedOrgs).toFixed(1) : "0"
+              }
+            />
+          </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Signups · last 30 days</CardTitle>
-          </CardHeader>
-          <CardContent className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={signupChart}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="orgs" name="Orgs" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="users" name="Users" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          <div className="grid gap-6 lg:grid-cols-3">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Signups · last 30 days</CardTitle>
+              </CardHeader>
+              <CardContent className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={signupChart}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                    <Tooltip />
+                    <Bar
+                      dataKey="orgs"
+                      name="Orgs"
+                      fill="hsl(var(--primary))"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar
+                      dataKey="users"
+                      name="Users"
+                      fill="hsl(var(--accent))"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Pending approvals</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {pendingOrgs.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No organizations awaiting approval.</p>
-            ) : (
-              <ul className="space-y-2">
-                {pendingOrgs.map((o) => (
-                  <li
-                    key={o.id}
-                    className="flex items-center justify-between gap-2 border rounded-md p-2"
-                  >
-                    <div className="min-w-0">
-                      <div className="font-medium truncate">{o.name}</div>
-                      <div className="text-xs text-muted-foreground">
+            <Card>
+              <CardHeader>
+                <CardTitle>Pending approvals</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {pendingOrgs.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No organizations awaiting approval.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {pendingOrgs.map((o) => (
+                      <li
+                        key={o.id}
+                        className="flex items-center justify-between gap-2 border rounded-md p-2"
+                      >
+                        <div className="min-w-0">
+                          <div className="font-medium truncate">{o.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(o.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            onClick={() =>
+                              askConfirm({
+                                title: "Approve organization",
+                                description: `Approve "${o.name}"? This will grant access to all members immediately.`,
+                                onConfirm: () =>
+                                  setOrgStatus.mutate({ id: o.id, status: "approved" }),
+                              })
+                            }
+                            aria-label="Approve organization"
+                            title="Approve"
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              askConfirm({
+                                title: "Reject organization",
+                                description: `Reject "${o.name}"? This will deny access to all members.`,
+                                variant: "destructive",
+                                onConfirm: () =>
+                                  setOrgStatus.mutate({ id: o.id, status: "rejected" }),
+                              })
+                            }
+                            aria-label="Reject organization"
+                            title="Reject"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Organizations</CardTitle>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orgs.data?.map((o) => (
+                    <TableRow key={o.id}>
+                      <TableCell className="font-medium">{o.name}</TableCell>
+                      <TableCell>{statusBadge(o.status)}</TableCell>
+                      <TableCell className="text-muted-foreground">
                         {new Date(o.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          askConfirm({
-                            title: "Approve organization",
-                            description: `Approve "${o.name}"? This will grant access to all members immediately.`,
-                            onConfirm: () => setOrgStatus.mutate({ id: o.id, status: "approved" }),
-                          })
-                        }
-                        aria-label="Approve organization"
-                        title="Approve"
-                      >
-                        <Check className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          askConfirm({
-                            title: "Reject organization",
-                            description: `Reject "${o.name}"? This will deny access to all members.`,
-                            variant: "destructive",
-                            onConfirm: () => setOrgStatus.mutate({ id: o.id, status: "rejected" }),
-                          })
-                        }
-                        aria-label="Reject organization"
-                        title="Reject"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Organizations</CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orgs.data?.map((o) => (
-                <TableRow key={o.id}>
-                  <TableCell className="font-medium">{o.name}</TableCell>
-                  <TableCell>{statusBadge(o.status)}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {new Date(o.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="inline-flex gap-1 justify-end">
-                      {o.status !== "approved" && (
-                        <Button
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() =>
-                            askConfirm({
-                              title:
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="inline-flex gap-1 justify-end">
+                          {o.status !== "approved" && (
+                            <Button
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() =>
+                                askConfirm({
+                                  title:
+                                    o.status === "suspended"
+                                      ? "Reactivate organization"
+                                      : "Approve organization",
+                                  description:
+                                    o.status === "suspended"
+                                      ? `Reactivate "${o.name}"? All members will regain access.`
+                                      : `Approve "${o.name}"? This will grant access to all members immediately.`,
+                                  onConfirm: () =>
+                                    setOrgStatus.mutate({ id: o.id, status: "approved" }),
+                                })
+                              }
+                              aria-label={
                                 o.status === "suspended"
                                   ? "Reactivate organization"
-                                  : "Approve organization",
-                              description:
-                                o.status === "suspended"
-                                  ? `Reactivate "${o.name}"? All members will regain access.`
-                                  : `Approve "${o.name}"? This will grant access to all members immediately.`,
-                              onConfirm: () =>
-                                setOrgStatus.mutate({ id: o.id, status: "approved" }),
-                            })
-                          }
-                          aria-label={
-                            o.status === "suspended"
-                              ? "Reactivate organization"
-                              : "Approve organization"
-                          }
-                          title={o.status === "suspended" ? "Reactivate" : "Approve"}
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {o.status === "approved" && (
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          className="h-8 w-8"
-                          onClick={() =>
-                            askConfirm({
-                              title: "Suspend organization",
-                              description: `Suspend "${o.name}"? All members will lose access until reactivated.`,
-                              variant: "destructive",
-                              onConfirm: () =>
-                                setOrgStatus.mutate({ id: o.id, status: "suspended" }),
-                            })
-                          }
-                          aria-label="Suspend organization"
-                          title="Suspend"
-                        >
-                          <Ban className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {o.status === "pending" && (
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          className="h-8 w-8"
-                          onClick={() =>
-                            askConfirm({
-                              title: "Reject organization",
-                              description: `Reject "${o.name}"? This will deny access to all members.`,
-                              variant: "destructive",
-                              onConfirm: () =>
-                                setOrgStatus.mutate({ id: o.id, status: "rejected" }),
-                            })
-                          }
-                          aria-label="Reject organization"
-                          title="Reject"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                                  : "Approve organization"
+                              }
+                              title={o.status === "suspended" ? "Reactivate" : "Approve"}
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {o.status === "approved" && (
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                              onClick={() =>
+                                askConfirm({
+                                  title: "Suspend organization",
+                                  description: `Suspend "${o.name}"? All members will lose access until reactivated.`,
+                                  variant: "destructive",
+                                  onConfirm: () =>
+                                    setOrgStatus.mutate({ id: o.id, status: "suspended" }),
+                                })
+                              }
+                              aria-label="Suspend organization"
+                              title="Suspend"
+                            >
+                              <Ban className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {o.status === "pending" && (
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                              onClick={() =>
+                                askConfirm({
+                                  title: "Reject organization",
+                                  description: `Reject "${o.name}"? This will deny access to all members.`,
+                                  variant: "destructive",
+                                  onConfirm: () =>
+                                    setOrgStatus.mutate({ id: o.id, status: "rejected" }),
+                                })
+                              }
+                              aria-label="Reject organization"
+                              title="Reject"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle>Users</CardTitle>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Organization</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {profiles.data?.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-medium">{p.full_name ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{p.email ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {p.org_id ? (orgNameById.get(p.org_id) ?? "—") : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {(rolesByUser.get(p.id) ?? []).length === 0 ? (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          ) : (
+                            (rolesByUser.get(p.id) ?? []).map((r) => (
+                              <Badge
+                                key={r}
+                                variant={
+                                  r === "super_admin"
+                                    ? "destructive"
+                                    : r === "admin"
+                                      ? "default"
+                                      : "secondary"
+                                }
+                                className="capitalize"
+                              >
+                                {r.replace("_", " ")}
+                              </Badge>
+                            ))
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{statusBadge(p.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="inline-flex gap-1 justify-end">
+                          {p.status === "approved" ? (
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                              onClick={() =>
+                                askConfirm({
+                                  title: "Suspend user",
+                                  description: `Suspend ${p.full_name ?? p.email ?? "this user"}? They will lose access immediately.`,
+                                  variant: "destructive",
+                                  onConfirm: () =>
+                                    setProfileStatus.mutate({ id: p.id, status: "rejected" }),
+                                })
+                              }
+                              aria-label="Suspend user"
+                              title="Suspend"
+                            >
+                              <Ban className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          <AlertDialog
+            open={confirm.open}
+            onOpenChange={(open) => setConfirm((c) => ({ ...c, open }))}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{confirm.title}</AlertDialogTitle>
+                <AlertDialogDescription>{confirm.description}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setConfirm((c) => ({ ...c, open: false }))}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  className={
+                    confirm.variant === "destructive"
+                      ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      : ""
+                  }
+                  onClick={() => {
+                    confirm.onConfirm();
+                    setConfirm((c) => ({ ...c, open: false }));
+                  }}
+                >
+                  Confirm
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      )}
+    </div>
+  );
+}
+
+function AdminSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="rounded-lg border p-3">
+            <SkelBar className="h-8 w-8 rounded-md" />
+            <SkelBar className="mt-2 h-3 w-20" />
+            <SkelBar className="mt-1 h-5 w-12" />
+          </div>
+        ))}
+      </div>
       <Card>
         <CardHeader>
-          <CardTitle>Users</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <SkelBar className="h-4 w-44" />
+          </CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Organization</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {profiles.data?.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.full_name ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{p.email ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {p.org_id ? (orgNameById.get(p.org_id) ?? "—") : "—"}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {(rolesByUser.get(p.id) ?? []).length === 0 ? (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      ) : (
-                        (rolesByUser.get(p.id) ?? []).map((r) => (
-                          <Badge
-                            key={r}
-                            variant={
-                              r === "super_admin"
-                                ? "destructive"
-                                : r === "admin"
-                                  ? "default"
-                                  : "secondary"
-                            }
-                            className="capitalize"
-                          >
-                            {r.replace("_", " ")}
-                          </Badge>
-                        ))
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>{statusBadge(p.status)}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="inline-flex gap-1 justify-end">
-                      {p.status === "approved" ? (
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          className="h-8 w-8"
-                          onClick={() =>
-                            askConfirm({
-                              title: "Suspend user",
-                              description: `Suspend ${p.full_name ?? p.email ?? "this user"}? They will lose access immediately.`,
-                              variant: "destructive",
-                              onConfirm: () =>
-                                setProfileStatus.mutate({ id: p.id, status: "rejected" }),
-                            })
-                          }
-                          aria-label="Suspend user"
-                          title="Suspend"
-                        >
-                          <Ban className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <CardContent>
+          <PanelSkeleton bars={4} />
         </CardContent>
       </Card>
-
-      <AlertDialog open={confirm.open} onOpenChange={(open) => setConfirm((c) => ({ ...c, open }))}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{confirm.title}</AlertDialogTitle>
-            <AlertDialogDescription>{confirm.description}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setConfirm((c) => ({ ...c, open: false }))}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              className={
-                confirm.variant === "destructive"
-                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  : ""
-              }
-              onClick={() => {
-                confirm.onConfirm();
-                setConfirm((c) => ({ ...c, open: false }));
-              }}
-            >
-              Confirm
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <TableSkeleton cols={5} rows={6} />
     </div>
   );
 }

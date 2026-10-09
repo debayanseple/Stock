@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { createBill, getBills, getBillById, updateBillPayment } from "@/lib/billing.functions";
+import { Bar } from "@/components/skeletons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -724,9 +725,18 @@ function BillingPage() {
 
               <div className="flex-1 overflow-y-auto p-3">
                 {products.isLoading ? (
-                  <p className="text-center text-sm text-muted-foreground py-8">
-                    Loading products…
-                  </p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <div key={i} className="space-y-2 rounded-lg border p-3">
+                        <Bar className="h-4 w-3/4" />
+                        <Bar className="h-3 w-1/2" />
+                        <div className="flex items-center justify-between pt-1">
+                          <Bar className="h-4 w-16" />
+                          <Bar className="h-5 w-8 rounded-full" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ) : filteredProducts.length === 0 ? (
                   <p className="text-center text-sm text-muted-foreground py-8">
                     {search
@@ -1563,8 +1573,16 @@ function BillHistory({
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden p-0">
         {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <p className="text-muted-foreground">Loading…</p>
+          <div className="space-y-2 p-3">
+            {Array.from({ length: 6 }).map((_, r) => (
+              <div key={r} className="flex items-center gap-3">
+                <Bar className="h-3.5 w-16 shrink-0" />
+                <Bar className="h-3.5 w-24 shrink-0" />
+                <Bar className="h-3.5 flex-1" />
+                <Bar className="h-3.5 w-16 shrink-0" />
+                <Bar className="h-5 w-20 shrink-0 rounded-full" />
+              </div>
+            ))}
           </div>
         ) : bills.length === 0 ? (
           <div className="flex items-center justify-center h-64">
