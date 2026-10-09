@@ -34,6 +34,10 @@ export function prefetchSection(qc: QueryClient, path: string): void {
     case path.startsWith("/billing"):
       prefetchProducts(qc);
       break;
+    case path.startsWith("/members"):
+      prefetchMembers(qc);
+      prefetchOrgInvites(qc);
+      break;
     case path.startsWith("/dashboard"):
       prefetchProducts(qc);
       prefetchCategories(qc);
@@ -112,5 +116,37 @@ function prefetchRecentBills(qc: QueryClient) {
       return data;
     },
     staleTime: 30_000,
+  });
+}
+
+// Mirrors the members page queries so the tab bar tap lands on warm cache.
+function prefetchMembers(qc: QueryClient) {
+  void qc.prefetchQuery({
+    queryKey: ["org_members"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, status, org_id")
+        .order("status", { ascending: true })
+        .order("full_name", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 60_000,
+  });
+}
+
+function prefetchOrgInvites(qc: QueryClient) {
+  void qc.prefetchQuery({
+    queryKey: ["org_invites"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("org_invites")
+        .select("id, email, role, token, expires_at, accepted_at, created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 60_000,
   });
 }

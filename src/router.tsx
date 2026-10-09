@@ -39,7 +39,9 @@ export const getRouter = () => {
     // Start loading the target route's JS chunk on hover/focus of a Link,
     // so clicking feels instant even on first visit.
     defaultPreload: "intent",
-    defaultPreloadStaleTime: 0,
+    // Hold the preloaded module for 30s. At 0 the intent-preload result is
+    // discarded immediately, so the chunk was re-fetched on click anyway.
+    defaultPreloadStaleTime: 30_000,
   });
 
   return router;

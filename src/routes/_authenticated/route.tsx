@@ -376,6 +376,11 @@ function LayoutShell() {
                     aria-label={item.title}
                     aria-current={active ? "page" : undefined}
                     title={item.title}
+                    // Warm the cache before the tap lands. Touch matters most:
+                    // phones have no hover, so mouseenter alone never fires.
+                    onMouseEnter={() => prefetchSection(qc, item.url)}
+                    onFocus={() => prefetchSection(qc, item.url)}
+                    onTouchStart={() => prefetchSection(qc, item.url)}
                     className={`flex h-14 items-center justify-center transition-colors ${
                       active ? "text-primary" : "text-muted-foreground"
                     }`}
