@@ -303,7 +303,6 @@ function BillingPage() {
 
   // Barcode scanning
   const [scannerOpen, setScannerOpen] = useState(false);
-  const [manualCode, setManualCode] = useState("");
   const [highlightId, setHighlightId] = useState<string | null>(null);
   // Quantity prompt shown after a scan/type resolves to a product.
   const [scanPrompt, setScanPrompt] = useState<{ product: Product; code: string } | null>(null);
@@ -589,12 +588,18 @@ function BillingPage() {
     ? (cart.find((i) => i.product.id === scanPrompt.product.id)?.quantity ?? 0)
     : 0;
 
-  const submitManualCode = (e: React.FormEvent) => {
+  // Enter in the search field: an exact SKU/Product ID (or a hardware scanner
+  // typing one in) goes straight to the quantity prompt. A partial query is
+  // left in place so the filtered grid stays useful.
+  const submitSearchOrAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    const code = manualCode.trim();
+    const code = search.trim();
     if (!code) return;
-    handleCodeDetected(code);
-    setManualCode("");
+    if (!products.data) {
+      toast.info("Products are still loading — try again in a moment");
+      return;
+    }
+    if (findProductByCode(code)) handleCodeDetected(code);
   };
 
   const updateQuantity = (productId: string, delta: number) => {
@@ -680,10 +685,13 @@ function BillingPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col overflow-hidden p-0">
-              <div className="shrink-0 space-y-2 border-b p-3">
+              {/* One field for both jobs: filters the grid as you type, and
+                  accepts a scanned/typed SKU or Product ID on Enter. */}
+              <form onSubmit={submitSearchOrAdd} className="shrink-0 border-b p-3">
                 <div className="flex gap-2">
                   {hasCamera && (
                     <Button
+                      type="button"
                       onClick={() => setScannerOpen(true)}
                       className="h-11 shrink-0 sm:h-9"
                       aria-label="Scan barcode"
@@ -694,34 +702,18 @@ function BillingPage() {
                   )}
                   <Input
                     ref={searchRef}
-                    placeholder="Search product by name, SKU or Product ID…"
+                    placeholder="Search, or scan / type SKU or Product ID…"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="h-11 min-w-0 flex-1 sm:h-9"
-                  />
-                </div>
-                <form onSubmit={submitManualCode} className="flex gap-2">
-                  <Input
-                    value={manualCode}
-                    onChange={(e) => setManualCode(e.target.value)}
-                    placeholder="Or scan / type SKU or Product ID…"
                     inputMode="text"
                     autoCapitalize="characters"
                     autoCorrect="off"
                     spellCheck={false}
+                    aria-label="Search products or enter a SKU or Product ID"
                     className="h-11 min-w-0 flex-1 sm:h-9"
                   />
-                  <Button
-                    type="submit"
-                    variant="outline"
-                    className="h-11 shrink-0 sm:h-9"
-                    disabled={!manualCode.trim()}
-                  >
-                    <Plus className="h-4 w-4 sm:mr-1" />
-                    <span className="sm:inline">Add</span>
-                  </Button>
-                </form>
-              </div>
+                </div>
+              </form>
 
               <div className="flex-1 overflow-y-auto p-3">
                 {products.isLoading ? (
